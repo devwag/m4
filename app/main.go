@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"log"
-	"m4/eg"
+	"m4/eventgrid"
 	"m4/logb"
 	"net/http"
 	"strconv"
@@ -22,8 +22,7 @@ func main() {
 	// r.Methods("POST")
 	// r.Headers("x-forwarded-proto", "https")
 
-	r.Handle("/foo", logb.LogHandler(eg.EventGridHandler(fooHandler{}))).Headers("x-forwarded-proto", "https")
-	r.Handle("/bar", logb.LogHandler(eg.EventGridHandler(barHandler{})))
+	r.Handle("/person", logb.Handler(eventgrid.Handler(personHandler{})))
 	http.Handle("/", r)
 
 	srv := &http.Server{
