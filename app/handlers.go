@@ -5,14 +5,8 @@ import (
 	"net/http"
 )
 
-type fooHandler struct{}
+type personHandler struct{}
 
-func (h fooHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "foo")
-}
-
-type barHandler struct{}
-
-func (h barHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "bar")
+func (h personHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "person handler")
 }
