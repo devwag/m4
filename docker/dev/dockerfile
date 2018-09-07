@@ -1,0 +1,26 @@
+FROM golang:1.11-stretch
+
+# add SSHD support to the base go container
+RUN echo "root:Docker!" | chpasswd && \
+apt-get update && \
+apt-get install -y --no-install-recommends openssh-server curl nano wget && \
+apt-get upgrade -y && \
+mkdir -p /root/go/src
+
+COPY sshd_config /etc/ssh/
+COPY .bashrc /root
+
+EXPOSE 2222 8080
+
+ENV SHELL /bin/bash
+ENV GOPATH=/root/go
+
+WORKDIR /root/go/src
+
+# get the code from git repo
+RUN git clone -b master --single-branch https://github.com/bartr/m4  && \
+go get ./... && \
+cd /root && \
+go build m4/app
+
+CMD /root/app
