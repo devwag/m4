@@ -1,11 +1,12 @@
-package eg
+package eventgrid
 
 import (
 	"fmt"
 	"net/http"
 )
 
-func EventGridHandler(next http.Handler) http.Handler {
+// Handler - handle the event grid message
+func Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Print("eventGridHandler ")
 
