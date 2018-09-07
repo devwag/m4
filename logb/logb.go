@@ -6,9 +6,24 @@ import (
 	"time"
 )
 
-func LogHandler(next http.Handler) http.Handler {
+// TODO - should we replace with Gorilla logger?
+
+// TODO - mkdir -p logFilePath
+// TODO - add MultiWriter support
+// TODO - use flag for logfilepath
+// TODO - add error log and method
+// TODO - add verbose support
+// TODO - add Apache log file support
+
+var logFilePath = "/home/LogFiles/"
+
+//Handler - http handler that writes to log file(s)
+func Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		wr := NewResponseRecorder(w)
+		wr := &ResponseLogger{
+			ResponseWriter: w,
+			status:         0,
+			start:          time.Now().UTC()}
 
 		if next != nil {
 			next.ServeHTTP(wr, r)
@@ -18,27 +33,22 @@ func LogHandler(next http.Handler) http.Handler {
 	})
 }
 
-type responseRecorder struct {
+// ResponseLogger - wrap http.ResponseWriter to include status and size
+type ResponseLogger struct {
 	http.ResponseWriter
 	status int
 	size   int
 	start  time.Time
 }
 
-func NewResponseRecorder(w http.ResponseWriter) *responseRecorder {
-	return &responseRecorder{
-		ResponseWriter: w,
-		status:         http.StatusOK,
-		start:          time.Now(),
-	}
-}
-
-func (r *responseRecorder) WriteHeader(status int) {
+// WriteHeader - wraps http.WriteHeader
+func (r *ResponseLogger) WriteHeader(status int) {
 	r.status = status
 	r.ResponseWriter.WriteHeader(status)
 }
 
-func (r *responseRecorder) Write(buf []byte) (int, error) {
+// Write - wraps http.Write
+func (r *ResponseLogger) Write(buf []byte) (int, error) {
 	n, err := r.ResponseWriter.Write(buf)
 	if err == nil {
 		r.size += n
