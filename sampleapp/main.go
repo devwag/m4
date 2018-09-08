@@ -48,7 +48,7 @@ func runServer(port int) error {
 
 	// use gorilla mux
 	r := mux.NewRouter()
-	r.Methods("POST")
+	// r.Methods("POST")
 
 	// TODO make sure the request used https
 	// r.Headers("x-forwarded-proto", "https")
