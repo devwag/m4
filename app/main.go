@@ -22,7 +22,7 @@ func main() {
 	flag.Parse()
 
 	// TODO - this is temporary
-	logFile, err := os.OpenFile("/home/LogFiles/messages.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("/home/LogFiles/app.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
 		fmt.Println(err)
