@@ -38,6 +38,10 @@ func init() {
 //Handler - http handler that writes to log file(s)
 func Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		log.Println("x-forwarded-proto", r.Header.Get("x-forwarded-proto"))
+		log.Println("x-arr-ssl", r.Header.Get("x-arr-ssl"))
+
 		wr := &ResponseLogger{
 			ResponseWriter: w,
 			status:         0,

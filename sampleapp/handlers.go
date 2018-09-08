@@ -18,9 +18,6 @@ type person struct {
 // env is the event grid envelope that was parsed by the eveng grid handler
 func personHandler(w http.ResponseWriter, r *http.Request, env *eventgrid.Envelope) {
 
-	log.Println("x-forwarded-proto", r.Header.Get("x-forwarded-proto"))
-	log.Println("x-arr-ssl", r.Header.Get("x-arr-ssl"))
-
 	// get the values from env.Data
 	var p person
 	err := json.Unmarshal(env.Data, &p)
