@@ -58,7 +58,7 @@ func runServer(port int) error {
 
 	// this is our only handler
 	// chain the handlers together as middleware
-	r.Handle("/person", logb.Handler(eventgrid.Handler(personHandler))).Methods("POST")
+	r.Handle("/person", logb.Handler(eventgrid.Handler(personHandler))).Methods("POST").Headers("x-forwarded-proto", "https")
 	http.Handle("/", r)
 
 	// setup the server
