@@ -1,35 +1,37 @@
 package logb
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
 // TODO - should we replace with Gorilla logger?
 
 // TODO - mkdir -p logFilePath
-// TODO - add MultiWriter support
 // TODO - use flag for logfilepath
-// TODO - add error log and method
-// TODO - add verbose support
 // TODO - add Apache log file support
+// TODO - add instance id to file name
 
-var logFilePath = "/home/LogFiles/"
 var reqLog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 func init() {
+	var logFilePath = "/home/LogFiles/"
+
+	if !strings.HasSuffix(logFilePath, "/") {
+		logFilePath += "/"
+	}
+
 	logFile, err := os.OpenFile(logFilePath+"request.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	} else {
 		wrt := io.MultiWriter(os.Stdout, logFile)
 		reqLog.SetOutput(wrt)
-		reqLog.SetFlags(log.Ldate | log.Ltime)
 	}
 }
 
