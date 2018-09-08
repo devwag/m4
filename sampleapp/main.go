@@ -27,10 +27,19 @@ func main() {
 
 	setupLog(logPath)
 
-	runServer(*port)
+	log.Println("Listening on port: ", port)
+
+	// run the server
+	err := runServer(*port)
+
+	if err != nil {
+		log.Println("ERROR:", err)
+	}
+
+	log.Println("Server Exit")
 }
 
-func runServer(port int) {
+func runServer(port int) error {
 
 	// TODO - use a Go routine and capture ctrl c
 
@@ -54,11 +63,8 @@ func runServer(port int) {
 		ReadTimeout:  5 * time.Second,
 	}
 
-	log.Println("Listening on port: ", port)
-
 	// this will block until the server ends
-	log.Println(srv.ListenAndServe())
-
+	return srv.ListenAndServe()
 }
 
 // setup log multi writer
