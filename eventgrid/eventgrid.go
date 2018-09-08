@@ -3,26 +3,9 @@ package eventgrid
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 )
-
-// TODO - this is temporary
-func init() {
-	logFile, err := os.OpenFile("/home/LogFiles/messages.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-
-	if err != nil {
-		logFile = nil
-		fmt.Println(err)
-	}
-
-	wrt := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(wrt)
-	log.SetFlags(log.Ldate | log.Ltime)
-	log.Println("init complete")
-}
 
 // Handler - handle the event grid message
 func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) http.Handler {
@@ -118,6 +101,7 @@ func handleValidate(w http.ResponseWriter, msg *Envelope) error {
 	w.WriteHeader(200)
 
 	fmt.Fprintf(w, "{ \"validationResponse\": \"%v\" }", vData.ValidationCode)
+	log.Println("EventGridValidation: Success")
 
 	return nil
 }
