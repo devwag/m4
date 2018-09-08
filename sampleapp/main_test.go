@@ -7,9 +7,19 @@ import (
 	"m4/logb"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
+
+func TestMainFunc(t *testing.T) {
+	go main()
+	time.Sleep(500 * time.Millisecond)
+
+	osChan <- os.Interrupt
+
+	time.Sleep(500 * time.Millisecond)
+}
 
 func TestPersonHandler(t *testing.T) {
 
