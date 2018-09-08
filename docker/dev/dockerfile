@@ -17,8 +17,10 @@ COPY runapp.sh /root
 
 # get the code from git repo
 RUN cd /go/src && \
-git clone -b eventgrid --single-branch https://github.com/bartr/m4  && \
+git clone -b master --single-branch https://github.com/bartr/m4  && \
 go get ./... && \
 cd /root
+
+# the app gets rebuilt in runapp.sh
 
 CMD /root/runapp.sh
