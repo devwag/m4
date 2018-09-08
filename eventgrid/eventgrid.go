@@ -7,6 +7,9 @@ import (
 	"net/http"
 )
 
+// TODO - Log / Reject bad EG messages
+// TODO - handle upcoming EG change that can send multiple items in a message
+
 // Handler - handle the event grid message
 func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
