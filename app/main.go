@@ -22,7 +22,7 @@ func main() {
 	// r.Methods("POST")
 	// r.Headers("x-forwarded-proto", "https")
 
-	r.Handle("/person", logb.Handler(eventgrid.Handler(personHandler{})))
+	r.Handle("/person", logb.Handler(eventgrid.Handler(personHandler)))
 	http.Handle("/", r)
 
 	srv := &http.Server{
