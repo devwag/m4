@@ -13,20 +13,20 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 
 		var env Envelope
 		var err error
+		var msg []Envelope
 
 		// validate the request
 		err = validateRequest(r)
 
 		// decode the event grid message from the body
 		if err == nil {
-			err = json.NewDecoder(r.Body).Decode(&env)
-			if err == nil {
-				r.Body.Close()
-			}
+			err = json.NewDecoder(r.Body).Decode(&msg)
 		}
 
 		// validate the event grid envelope
 		if err == nil {
+			r.Body.Close()
+			env = msg[0]
 			err = ValidateEnvelope(&env)
 		}
 
@@ -54,7 +54,7 @@ func validateRequest(r *http.Request) error {
 	// only support post
 	// TODO - should we always check this?
 	if r.Method != "POST" {
-		return fmt.Errorf(r.Method, "Not supported")
+		return fmt.Errorf("%v Not supported", r.Method)
 	}
 
 	// TODO - should we add an https check?
