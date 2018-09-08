@@ -29,7 +29,7 @@ func Handler(next http.Handler) http.Handler {
 			next.ServeHTTP(wr, r)
 		}
 
-		log.Println(wr.status, r.URL.Path, time.Now().UTC().Sub(wr.start).Nanoseconds())
+		log.Println(wr.status, r.URL.Path, time.Now().UTC().Sub(wr.start).Nanoseconds()/100000)
 	})
 }
 
