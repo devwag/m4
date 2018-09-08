@@ -16,7 +16,9 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 		var msg []Envelope
 
 		// validate the request
-		err = validateRequest(r)
+		if r.Body == nil {
+			err = fmt.Errorf("No request body")
+		}
 
 		// decode the event grid message from the body
 		if err == nil {
@@ -48,22 +50,6 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 			w.WriteHeader(500)
 		}
 	})
-}
-
-func validateRequest(r *http.Request) error {
-	// only support post
-	// TODO - should we always check this?
-	if r.Method != "POST" {
-		return fmt.Errorf("%v Not supported", r.Method)
-	}
-
-	// TODO - should we add an https check?
-
-	if r.Body == nil {
-		return fmt.Errorf("No request body")
-	}
-
-	return nil
 }
 
 // ValidateEnvelope - validates a message grid envelope contains required fields

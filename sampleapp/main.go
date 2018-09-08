@@ -48,16 +48,11 @@ func runServer(port int) error {
 
 	// use gorilla mux
 	r := mux.NewRouter()
-	// TODO this causes app services to reject the request
-	//     need to debug
-	// putting the methods call on the handler works correctly
-	// r.Methods("POST")
-
-	// TODO make sure the request used https
-	// r.Headers("x-forwarded-proto", "https")
 
 	// this is our only handler
 	// chain the handlers together as middleware
+	// app services does https offloading, so check for the x-forwarded-proto header
+	// only accept POST requests
 	r.Handle("/person", logb.Handler(eventgrid.Handler(personHandler))).Methods("POST").Headers("x-forwarded-proto", "https")
 	http.Handle("/", r)
 
