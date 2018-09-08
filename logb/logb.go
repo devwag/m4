@@ -1,8 +1,11 @@
 package logb
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -16,6 +19,19 @@ import (
 // TODO - add Apache log file support
 
 var logFilePath = "/home/LogFiles/"
+var reqLog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+func init() {
+	logFile, err := os.OpenFile(logFilePath+"request.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		wrt := io.MultiWriter(os.Stdout, logFile)
+		reqLog.SetOutput(wrt)
+		reqLog.SetFlags(log.Ldate | log.Ltime)
+	}
+}
 
 //Handler - http handler that writes to log file(s)
 func Handler(next http.Handler) http.Handler {
@@ -29,7 +45,7 @@ func Handler(next http.Handler) http.Handler {
 			next.ServeHTTP(wr, r)
 		}
 
-		log.Println(wr.status, r.URL.Path, time.Now().UTC().Sub(wr.start).Nanoseconds()/100000)
+		reqLog.Println(wr.status, r.URL.Path, time.Now().UTC().Sub(wr.start).Nanoseconds()/100000)
 	})
 }
 
