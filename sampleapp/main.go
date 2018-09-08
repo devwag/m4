@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"io"
 	"log"
+	"os/signal"
 
 	// TODO should change these to github.com/bartr/m4 once stable
 	"m4/eventgrid"
@@ -17,6 +19,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// channel used to send os.Interrupts
+var osChan = make(chan os.Signal, 1)
+
 // application startup
 func main() {
 
@@ -27,7 +32,7 @@ func main() {
 
 	setupLog(logPath)
 
-	log.Println("Listening on port: ", port)
+	log.Println("Listening on port: ", *port)
 
 	// run the server
 	err := runServer(*port)
@@ -40,8 +45,6 @@ func main() {
 }
 
 func runServer(port int) error {
-
-	// TODO - use a Go routine and capture ctrl c
 
 	// use gorilla mux
 	r := mux.NewRouter()
@@ -63,8 +66,25 @@ func runServer(port int) error {
 		ReadTimeout:  5 * time.Second,
 	}
 
-	// this will block until the server ends
-	return srv.ListenAndServe()
+	// run webserver in a Go routine so we can cancel
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Println("ERROR:", err)
+		}
+	}()
+
+	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
+	signal.Notify(osChan, os.Interrupt)
+
+	// Block until we receive our signal
+	<-osChan
+
+	// Create a deadline to wait for
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	// Doesn't block if no connections, but will otherwise wait until the timeout deadline
+	return srv.Shutdown(ctx)
 }
 
 // setup log multi writer
