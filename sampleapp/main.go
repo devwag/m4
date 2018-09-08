@@ -50,6 +50,7 @@ func runServer(port int) error {
 	r := mux.NewRouter()
 	// TODO this causes app services to reject the request
 	//     need to debug
+	// putting the methods call on the handler works correctly
 	// r.Methods("POST")
 
 	// TODO make sure the request used https
