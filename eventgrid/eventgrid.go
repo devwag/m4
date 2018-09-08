@@ -53,17 +53,16 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 func validateRequest(r *http.Request) error {
 	// only support post
 	// TODO - should we always check this?
-	// if r.Method != "POST" {
-	// 	return fmt.Errorf("%v Not supported", r.Method)
-	// }
+	if r.Method != "POST" {
+		return fmt.Errorf("%v Not supported", r.Method)
+	}
 
-	// // TODO - should we add an https check?
+	// TODO - should we add an https check?
 
-	// if r.Body == nil {
-	// 	return fmt.Errorf("No request body")
-	// }
+	if r.Body == nil {
+		return fmt.Errorf("No request body")
+	}
 
-	log.Println(r.Method, r.Body == nil)
 	return nil
 }
 

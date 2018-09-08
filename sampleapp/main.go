@@ -48,6 +48,8 @@ func runServer(port int) error {
 
 	// use gorilla mux
 	r := mux.NewRouter()
+	// TODO this causes app services to reject the request
+	//     need to debug
 	// r.Methods("POST")
 
 	// TODO make sure the request used https
