@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"m4/eventgrid"
 	"net/http"
 )
@@ -19,8 +20,9 @@ func personHandler(w http.ResponseWriter, r *http.Request, env *eventgrid.Envelo
 	err := json.Unmarshal(env.Data, &p)
 
 	if err == nil {
+		w.WriteHeader(200)
 		fmt.Fprintln(w, "person Handler: ", p.FirstName, "", p.LastName)
-		fmt.Println("person Handler: ", env.ID, p.FirstName, "", p.LastName)
+		log.Println("person Handler: ", env.ID, p.FirstName, "", p.LastName)
 	} else {
 		fmt.Println(err)
 	}
