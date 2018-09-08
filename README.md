@@ -1,6 +1,6 @@
 # m4
 
-This project is an Event Grid Web Hook written in Go that supports receiving and processing 1 custom message type: Person. 
+This project is an Event Grid Web Hook written in Go that supports receiving and processing 1 custom message type: Person.
 
 ## Notes
 
