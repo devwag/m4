@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestLogb(t *testing.T) {
+func TestPersonHandler(t *testing.T) {
 
 	e, err := genMessage(t)
 
@@ -26,21 +26,22 @@ func TestLogb(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
+	// chain the person handler
 	h := http.Handler(logb.Handler(eventgrid.Handler(personHandler)))
 
 	h.ServeHTTP(w, r)
 
 	if err != nil {
-		t.Error("Request Error: ", err.Error())
+		t.Error("Request Error: ", err)
 	}
 
 	if w.Code != 200 {
-		t.Error("Error Code: ", w.Code)
+		t.Error("Return Code: ", w.Code)
 	}
 
 }
 
-// helper function to generate valid event grid message
+// helper function to generate valid event grid json
 func genMessage(t *testing.T) ([]byte, error) {
 	env := eventgrid.Envelope{Subject: "person", EventType: "person", DataVersion: "1.0"}
 	env.ID = "1001"
