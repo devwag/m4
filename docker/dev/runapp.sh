@@ -19,7 +19,7 @@ while [ -f "$file" ]
 do
 #  rm $file
   go build m4/sampleapp
-  ./app
+  ./sampleapp
   sleep .5
   rm -f app
 done
