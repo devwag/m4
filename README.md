@@ -18,9 +18,10 @@ This project is an Event Grid Web Hook written in Go that supports receiving and
 
 ## Getting Started
 
+* src/app contains the Web Hook that is deployed to: m4.azurewebsites.net
+* docker - contains docker build files for dev deployment
+
 * // TODO - not all checked in yet
-* app - contains the Web Hook that is deployed to: minus4dev.azurewebsites.net
-* docker -  contains production and dev docker build files
 * end2endtest - is an end to end test app that posts messages to Event Grid and verifies they get logged in SQL Server
 * SQL - is the sql DDL for creating the person table for messages
 
@@ -29,6 +30,7 @@ This project is an Event Grid Web Hook written in Go that supports receiving and
 * port - int - 8080 - port for web hook to listen on
 * logpath - string - /home/LogFiles/ - local path to the log files
   * this is the CIFS share mounted by App Service)
+
 ## Sharing Plan
 
 * Event Grid webhook sample for App Services / Go
