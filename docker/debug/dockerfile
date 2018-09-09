@@ -4,23 +4,22 @@ FROM golang:1.10-stretch
 RUN echo "root:Docker!" | chpasswd && \
 apt-get update && \
 apt-get install -y --no-install-recommends openssh-server curl nano wget && \
-apt-get upgrade -y && \
-cd /root
+apt-get upgrade -y
 
 WORKDIR /root
-
 EXPOSE 2222 8080
+ENV GOPATH=/root/m4
 
 COPY sshd_config /etc/ssh/
 COPY .bashrc /root
 COPY runapp.sh /root
 
+
 # get the code from git repo
-RUN cd /go/src && \
-git clone -b master --single-branch https://github.com/bartr/m4  && \
+RUN cd /root && \
+git clone -b ci-cd https://github.com/bartr/m4  && \
+cd /root/m4/src/m4/sampleapp && \
 go get ./... && \
 cd /root
-
-# the app gets rebuilt in runapp.sh
 
 CMD /root/runapp.sh

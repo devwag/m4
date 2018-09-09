@@ -21,40 +21,50 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 
 		// validate the request
 		if r.Body != nil {
-			defer r.Body.Close()
-		} else {
-			err = errors.New("No request body")
+			logError(w, errors.New("No request body"))
+			return
 		}
+		defer r.Body.Close()
 
 		// decode the event grid message from the body
-		if err == nil {
-			err = json.NewDecoder(r.Body).Decode(&msg)
+		if err = json.NewDecoder(r.Body).Decode(&msg); err != nil {
+			logError(w, err)
+			return
 		}
+
+		env = msg[0]
 
 		// validate the event grid envelope
-		if err == nil {
-			env = msg[0]
-			err = ValidateEnvelope(&env)
+		if err = ValidateEnvelope(&env); err != nil {
+			logError(w, err)
+			return
 		}
 
-		if err == nil {
-			// handle event grid subscription validation events
-			if env.EventType == "Microsoft.EventGrid.SubscriptionValidationEvent" {
-				err = handleValidate(w, &env)
-			} else {
-				// call the next handler
-				if next != nil {
-					next(w, r, &env)
-				}
+		// handle event grid subscription validation events
+		if env.EventType == "Microsoft.EventGrid.SubscriptionValidationEvent" {
+			r.URL.RawQuery = "validate"
+
+			// handle the event grid validation event
+			if err = handleValidate(w, &env); err != nil {
+				logError(w, err)
+				return
+			}
+		} else {
+			// call the next handler
+			if next != nil {
+				next(w, r, &env)
 			}
 		}
-
-		// log any error and return 500
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
-		}
 	})
+}
+
+// log the error and send a 500 status code
+func logError(w http.ResponseWriter, err error) {
+	// log any error and return 500
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(500)
+	}
 }
 
 // ValidateEnvelope - validates a message grid envelope contains required fields
@@ -74,6 +84,7 @@ func ValidateEnvelope(env *Envelope) error {
 	return nil
 }
 
+// handle the event grid webhook validation request
 func handleValidate(w http.ResponseWriter, msg *Envelope) error {
 	// get the validationCode from the json (that's all we care about)
 	var vData struct {
@@ -91,6 +102,7 @@ func handleValidate(w http.ResponseWriter, msg *Envelope) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
+	// echo the validation code back to event grid
 	fmt.Fprintf(w, "{ \"validationResponse\": \"%v\" }", vData.ValidationCode)
 	log.Println("EventGridValidation: Success")
 
