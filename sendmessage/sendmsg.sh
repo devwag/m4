@@ -8,7 +8,7 @@ then
         if [[ -z $1  ]]
         then
                 echo "usage: $0 subscriptionName"
-                exit 1
+                return
         fi
 
         az account set -s $1
