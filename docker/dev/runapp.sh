@@ -20,7 +20,7 @@ do
 #  rm $file
   go build m4/sampleapp
   ./sampleapp
-  sleep .5
+  sleep .1
   rm -f app
 done
 
