@@ -38,6 +38,7 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 		if err == nil {
 			// handle event grid subscription validation events
 			if env.EventType == "Microsoft.EventGrid.SubscriptionValidationEvent" {
+				r.URL.RawQuery = "validate"
 				err = handleValidate(w, &env)
 			} else {
 				// call the next handler
