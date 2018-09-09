@@ -63,6 +63,8 @@ func sendMessage() {
 		log.Println(err)
 		return
 	}
+	// close the request
+	defer resp.Body.Close()
 
 	// read the response
 	_, err = ioutil.ReadAll(resp.Body)
@@ -71,9 +73,6 @@ func sendMessage() {
 		log.Println(err)
 		return
 	}
-
-	// close the request
-	resp.Body.Close()
 
 	fmt.Println("Sent:", id)
 }
