@@ -6,17 +6,18 @@ apt-get update && \
 apt-get install -y --no-install-recommends openssh-server curl nano wget && \
 apt-get upgrade -y
 
+WORKDIR /root
+EXPOSE 2222 8080
+
 COPY sshd_config /etc/ssh/
 COPY .bashrc /root
 COPY runapp.sh /root
 
-EXPOSE 2222 8080
-
 # get the code from git repo
 RUN cd /go/src && \
-git clone -b eventgrid --single-branch https://github.com/bartr/m4  && \
-go get ./... 
+git clone -b bartr https://github.com/bartr/m4  && \
+go get ./... && \
+cd /root
 
-WORKDIR /root
 
-CMD ./runapp.sh
+CMD /root/runapp.sh
