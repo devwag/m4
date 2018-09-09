@@ -2,6 +2,7 @@ package eventgrid
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,8 +20,10 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 		var msg []Envelope
 
 		// validate the request
-		if r.Body == nil {
-			err = fmt.Errorf("No request body")
+		if r.Body != nil {
+			defer r.Body.Close()
+		} else {
+			err = errors.New("No request body")
 		}
 
 		// decode the event grid message from the body
@@ -30,7 +33,6 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 
 		// validate the event grid envelope
 		if err == nil {
-			r.Body.Close()
 			env = msg[0]
 			err = ValidateEnvelope(&env)
 		}
@@ -59,13 +61,13 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 func ValidateEnvelope(env *Envelope) error {
 	// verify event grid ID
 	if env.ID == "" {
-		return fmt.Errorf("Event Grid Envelope: missing ID")
+		return errors.New("Event Grid Envelope: missing ID")
 	}
 
 	// verify event grid has data
 	// TODO - should we do this? are empty data messages possible?
 	if env.Data == nil {
-		return fmt.Errorf("Event Grid Envelope: missing Data")
+		return errors.New("Event Grid Envelope: missing Data")
 	}
 
 	// TODO - add more validations
