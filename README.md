@@ -1,6 +1,6 @@
 # m4
 
-This project is an Event Grid Web Hook written in Go that supports receiving and processing 1 custom message type: Person. 
+This project is an Event Grid Web Hook written in Go that supports receiving and processing 1 custom message type: Person.
 
 ## Notes
 
@@ -11,19 +11,17 @@ This project is an Event Grid Web Hook written in Go that supports receiving and
 * Developer workstation will need
   * VSTS / Git access
   * Go (latest)
-  * SQL Server query tool (VSCode extension, SQLCMD, SSMS, etc.)
   * Docker on a Linux VM (CI/CD can also be used)
   * Azure subscription access for SSH access
     * TODO - what level access is required for SSH?
 
 ## Getting Started
 
-* src/app contains the Web Hook that is deployed to: m4.azurewebsites.net
-* docker - contains docker build files for dev deployment
-
-* // TODO - not all checked in yet
-* end2endtest - is an end to end test app that posts messages to Event Grid and verifies they get logged in SQL Server
-* SQL - is the sql DDL for creating the person table for messages
+* sampleapp - contains the Web Hook that is deployed to: m4.azurewebsites.net
+* docker -  contains production and dev docker build files
+* sendmessage - a simple app for sending messages to event grid
+* logb - a simple log wrapper for chaining requests
+* eventgrid - handler that parses the event grid "envelope" and handles validation events
 
 ## Flags
 
@@ -52,9 +50,3 @@ This project is an Event Grid Web Hook written in Go that supports receiving and
   * there's a bug but can be worked around with sed
   * need to move to src/app to make work
   * need to modify GOPATH to make work
-
-## Code Review Feedback
-
-* TODO - Add -verbose flag to logging
-* TODO - Log / Reject bad EG messages
-* TODO - handle upcoming EG change that can send multiple items in a message

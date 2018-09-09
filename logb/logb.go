@@ -38,6 +38,7 @@ func init() {
 //Handler - http handler that writes to log file(s)
 func Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		wr := &ResponseLogger{
 			ResponseWriter: w,
 			status:         0,
