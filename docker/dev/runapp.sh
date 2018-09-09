@@ -11,7 +11,7 @@ echo "restart" > $file
 echo "\nStarting server ($WEBSITE_ROLE_INSTANCE_ID) ..."
 
 # git the latest code
-cd /go/src/m4
+cd /root/m4
 git pull
 cd /root
 
