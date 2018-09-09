@@ -39,7 +39,6 @@ This project is an Event Grid Web Hook written in Go that supports receiving and
 
 ## To Do List
 
-* TODO - setup CI / CD pipeline
 * TODO - PR for app analytics
 * TODO - automate building infrastructure
 * TODO - add Apache log handler to write Apache style web logs?
