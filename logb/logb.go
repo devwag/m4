@@ -48,7 +48,7 @@ func Handler(next http.Handler) http.Handler {
 			next.ServeHTTP(wr, r)
 		}
 
-		reqLog.Println(wr.status, time.Now().UTC().Sub(wr.start).Nanoseconds()/100000, r.URL.Path, r.Method, r.URL.RawQuery)
+		reqLog.Println(wr.status, time.Now().UTC().Sub(wr.start).Nanoseconds()/100000, r.Method, r.URL.Path, r.URL.RawQuery)
 	})
 }
 
