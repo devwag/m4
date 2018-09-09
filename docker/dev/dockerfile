@@ -22,5 +22,4 @@ cd /root/m4/src/m4/sampleapp && \
 go get ./... && \
 cd /root
 
-CMD /bin/bash
-#CMD /root/runapp.sh
+CMD /root/runapp.sh
