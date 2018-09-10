@@ -18,10 +18,6 @@ func TestLogb(t *testing.T) {
 	h := Handler(http.HandlerFunc(testHandler))
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
 	if w.Code != 200 {
 		t.Error("Error Code: ", w.Code)
 	}
