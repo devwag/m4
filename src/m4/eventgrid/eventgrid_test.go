@@ -20,10 +20,6 @@ func TestGet(t *testing.T) {
 	h := Handler(nil)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -42,10 +38,6 @@ func TestEmptyBody(t *testing.T) {
 
 	h := Handler(nil)
 	h.ServeHTTP(w, r)
-
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
 
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
@@ -68,10 +60,6 @@ func TestGoodBody(t *testing.T) {
 	h := Handler(nil)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
 	if w.Code != 200 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -92,10 +80,6 @@ func TestBadJson(t *testing.T) {
 
 	h := Handler(nil)
 	h.ServeHTTP(w, r)
-
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
 
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
@@ -118,10 +102,6 @@ func TestMissingId(t *testing.T) {
 	h := Handler(nil)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -143,10 +123,6 @@ func TestMissingData(t *testing.T) {
 	h := Handler(nil)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -166,10 +142,6 @@ func TestEventGridValidation(t *testing.T) {
 
 	h := Handler(nil)
 	h.ServeHTTP(w, r)
-
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
 
 	if w.Code != 200 {
 		t.Error("Error Code: ", w.Code)
