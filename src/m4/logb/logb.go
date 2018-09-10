@@ -10,29 +10,26 @@ import (
 )
 
 // TODO - should we replace with Gorilla logger?
-
-// TODO - mkdir -p logFilePath
-// TODO - use flag for logfilepath
 // TODO - add Apache log file support
-// TODO - add instance id to file name
 
 var reqLog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
-func init() {
-	var logFilePath = "/home/LogFiles/"
+// Init - initialize the log writer
+func Init(logPath string) {
+	log.Println("request log", logPath)
 
-	if !strings.HasSuffix(logFilePath, "/") {
-		logFilePath += "/"
-	}
-
-	logFile, err := os.OpenFile(logFilePath+"request.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err := openLogFile(logPath)
 
 	if err != nil {
+		log.Println("init", err)
 		log.Println(err)
-	} else {
-		wrt := io.MultiWriter(os.Stdout, logFile)
-		reqLog.SetOutput(wrt)
+		return
 	}
+
+	wrt := io.MultiWriter(os.Stdout, logFile)
+	reqLog.SetOutput(wrt)
+
+	reqLog.Println("testing")
 }
 
 //Handler - http handler that writes to log file(s)
@@ -69,8 +66,36 @@ func (r *ResponseLogger) WriteHeader(status int) {
 // Write - wraps http.Write
 func (r *ResponseLogger) Write(buf []byte) (int, error) {
 	n, err := r.ResponseWriter.Write(buf)
+
 	if err == nil {
 		r.size += n
 	}
+
 	return n, err
+}
+
+// Open the log file
+func openLogFile(logPath string) (*os.File, error) {
+	fileName := logPath
+
+	if !strings.HasSuffix(fileName, "/") {
+		fileName += "/"
+	}
+
+	// make the log directory if it doesn't exist
+	if err := os.MkdirAll(fileName, 0666); err != nil {
+		return nil, err
+	}
+
+	fileName += "request"
+
+	// use instance ID to differentiate log files between instances in App Services
+	if iid := os.Getenv("WEBSITE_ROLE_INSTANCE_ID"); iid != "" {
+		fileName += "_" + strings.TrimSpace(iid)
+	}
+
+	fileName += ".log"
+
+	// open the log file
+	return os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 }
