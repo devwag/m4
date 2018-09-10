@@ -20,7 +20,7 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 		var msg []Envelope
 
 		// validate the request
-		if r.Body != nil {
+		if r.Body == nil {
 			logError(w, errors.New("No request body"))
 			return
 		}
@@ -91,10 +91,9 @@ func handleValidate(w http.ResponseWriter, msg *Envelope) error {
 		ValidationCode string `json:"validationCode"`
 		ValidationURL  string `json:"validationUrl"`
 	}
-	err := json.Unmarshal(msg.Data, &vData)
 
 	// handle the json error
-	if err != nil {
+	if err := json.Unmarshal(msg.Data, &vData); err != nil {
 		return err
 	}
 
