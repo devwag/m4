@@ -12,6 +12,19 @@ import (
 	"time"
 )
 
+func testFlags(t *testing.T) {
+
+	lp, err := validateFlags()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if lp != "./logs/" {
+		t.Error("invalid logPath:", lp)
+	}
+}
+
 // test the main() app
 func TestMainFunc(t *testing.T) {
 	go main()

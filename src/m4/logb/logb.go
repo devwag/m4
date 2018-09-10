@@ -1,6 +1,7 @@
 package logb
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -14,22 +15,26 @@ import (
 
 var reqLog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
-// Init - initialize the log writer
-func Init(logPath string) {
-	log.Println("request log", logPath)
+// SetLogPath - initialize the log file and add multi writer
+func SetLogPath(reqPath string) error {
+	reqPath = strings.TrimSpace(reqPath)
 
-	logFile, err := openLogFile(logPath)
-
-	if err != nil {
-		log.Println("init", err)
-		log.Println(err)
-		return
+	if reqPath == "" {
+		return errors.New("ERROR: logbpath cannot be blank")
 	}
 
+	// open the logfile
+	logFile, err := openLogFile(reqPath)
+
+	if err != nil {
+		return err
+	}
+
+	// setup the multi writer
 	wrt := io.MultiWriter(os.Stdout, logFile)
 	reqLog.SetOutput(wrt)
 
-	reqLog.Println("testing")
+	return nil
 }
 
 //Handler - http handler that writes to log file(s)
@@ -76,18 +81,17 @@ func (r *ResponseLogger) Write(buf []byte) (int, error) {
 
 // Open the log file
 func openLogFile(logPath string) (*os.File, error) {
-	fileName := logPath
 
-	if !strings.HasSuffix(fileName, "/") {
-		fileName += "/"
+	if !strings.HasSuffix(logPath, "/") {
+		logPath += "/"
 	}
 
 	// make the log directory if it doesn't exist
-	if err := os.MkdirAll(fileName, 0666); err != nil {
+	if err := os.MkdirAll(logPath, 0666); err != nil {
 		return nil, err
 	}
 
-	fileName += "request"
+	fileName := logPath + "request"
 
 	// use instance ID to differentiate log files between instances in App Services
 	if iid := os.Getenv("WEBSITE_ROLE_INSTANCE_ID"); iid != "" {
