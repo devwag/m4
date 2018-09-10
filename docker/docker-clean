@@ -1,2 +1,4 @@
-docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+#!/bin/sh
+# this is a helper script that removes "dangling" docker images
 
+docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
