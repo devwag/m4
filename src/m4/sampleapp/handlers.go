@@ -20,18 +20,18 @@ func personHandler(w http.ResponseWriter, r *http.Request, env *eventgrid.Envelo
 
 	// get the values from env.Data
 	var p person
-	err := json.Unmarshal(env.Data, &p)
 
-	if err == nil {
-		w.WriteHeader(200)
-
-		// event grid doesn't inspect the body on a 200
-
-		log.Println("person Handler: ", env.ID, p.FirstName, p.LastName)
-
-		// TODO this is where you would process the "person message"
-	} else {
+	if err := json.Unmarshal(env.Data, &p); err != nil {
 		w.WriteHeader(500)
 		log.Println("ERROR:", err)
+		return
 	}
+
+	w.WriteHeader(200)
+
+	// event grid doesn't inspect the body on a 200
+
+	log.Println("person Handler: ", env.ID, p.FirstName, p.LastName)
+
+	// TODO this is where you would process the "person message"
 }

@@ -22,22 +22,27 @@ import (
 // channel used to send os.Interrupts
 var osChan = make(chan os.Signal, 1)
 
-// application startup
-func main() {
-
-	// parse command line flags
-	port := flag.Int("port", 8080, "TCP port to listen on")
-	logPath := flag.String("logpath", "/home/LogFiles/", "path to write log files")
+// setup logger in init
+func init() {
+	logPath := flag.String("logpath", "./logs/", "path to write log files")
+	reqPath := flag.String("reqlogpath", "./logs/", "path to write request log files")
 	flag.Parse()
 
 	setupLog(logPath)
 
+	logb.Init(*reqPath)
+}
+
+// application startup
+func main() {
+	// parse command line flags
+	port := flag.Int("port", 8080, "TCP port to listen on")
+	flag.Parse()
+
 	log.Println("Listening on port: ", *port)
 
 	// run the server
-	err := runServer(*port)
-
-	if err != nil {
+	if err := runServer(*port); err != nil {
 		log.Println("ERROR:", err)
 	}
 
@@ -97,12 +102,13 @@ func setupLog(logPath *string) {
 	// we ignore the open error which means everything gets logged to stdout
 	if err != nil {
 		log.Println(err)
-	} else {
-		// setup a multiwriter to log to file and stdout
-		wrt := io.MultiWriter(os.Stdout, logFile)
-		log.SetOutput(wrt)
-		log.Println("init complete")
+		return
 	}
+
+	// setup a multiwriter to log to file and stdout
+	wrt := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(wrt)
+	log.Println("init complete")
 }
 
 // Open the log file
@@ -114,16 +120,16 @@ func openLogFile(logPath *string) (*os.File, error) {
 	}
 
 	// make the log directory if it doesn't exist
-	err := os.MkdirAll(fileName, 0666)
-	if err != nil {
+
+	if err := os.MkdirAll(fileName, 0666); err != nil {
 		return nil, err
 	}
 
 	fileName += "app"
 
 	// use instance ID to differentiate log files between instances in App Services
-	iid := os.Getenv("WEBSITE_ROLE_INSTANCE_ID")
-	if iid != "" {
+
+	if iid := os.Getenv("WEBSITE_ROLE_INSTANCE_ID"); iid != "" {
 		fileName += "_" + strings.TrimSpace(iid)
 	}
 
