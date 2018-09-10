@@ -41,9 +41,7 @@ func sendMessage() {
 	wrapper = append(wrapper, genMessage())
 
 	// Marshal the json
-	json, err := json.Marshal(wrapper)
-
-	if err != nil {
+	if json, err := json.Marshal(wrapper); err != nil {
 		log.Println(err)
 		return
 	}
@@ -67,9 +65,7 @@ func sendMessage() {
 	defer resp.Body.Close()
 
 	// read the response
-	_, err = ioutil.ReadAll(resp.Body)
-
-	if err != nil {
+	if _, err = ioutil.ReadAll(resp.Body); err != nil {
 		log.Println(err)
 		return
 	}
