@@ -21,7 +21,7 @@ func TestMain(t *testing.T) {
 // works fine testing local
 func TestSetLogFile(t *testing.T) {
 
-	if err := SetLogFile("./logs/test.log"); err != nil {
+	if err := SetLogFile("test.log"); err != nil {
 		t.Error(err)
 	}
 }
