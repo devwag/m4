@@ -8,12 +8,6 @@ import (
 
 func TestLogb(t *testing.T) {
 
-	err := SetLogPath("./logs/")
-
-	if err != nil {
-		t.Error(err)
-	}
-
 	r, err := http.NewRequest("GET", "https://www.logb.com/", nil)
 	if err != nil {
 		t.Error("NewRequest: ", err)

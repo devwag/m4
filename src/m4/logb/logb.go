@@ -64,7 +64,9 @@ type ResponseLogger struct {
 
 // WriteHeader - wraps http.WriteHeader
 func (r *ResponseLogger) WriteHeader(status int) {
+	// store status for logging
 	r.status = status
+
 	r.ResponseWriter.WriteHeader(status)
 }
 
@@ -72,6 +74,7 @@ func (r *ResponseLogger) WriteHeader(status int) {
 func (r *ResponseLogger) Write(buf []byte) (int, error) {
 	n, err := r.ResponseWriter.Write(buf)
 
+	// store bytes written for logging
 	if err == nil {
 		r.size += n
 	}

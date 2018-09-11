@@ -15,7 +15,7 @@ type person struct {
 
 // handle event grid "person" messages
 // w and r are standard http.Handler params
-// env is the event grid envelope that was parsed by the eveng grid handler
+// env is the event grid envelope that was parsed by the event grid handler
 func personHandler(w http.ResponseWriter, r *http.Request, env *eventgrid.Envelope) {
 
 	// get the values from env.Data

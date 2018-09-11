@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"os/signal"
@@ -66,7 +65,7 @@ func setupLogs(logPath string) error {
 	}
 
 	// setup logb multiwriter
-	if err := logb.SetLogFile(getFullLogName(logPath, "request", ".log")); err != nil {
+	if err := logb.SetLogFile(buildFullLogName(logPath, "request", ".log")); err != nil {
 		return err
 	}
 
@@ -98,6 +97,8 @@ func validateFlags() (string, error) {
 	return lp, nil
 }
 
+// setup and run the web server
+// this blocks until the web server exits
 func runServer(port int) error {
 
 	// use gorilla mux
@@ -146,7 +147,7 @@ func setupLog(logPath string) error {
 	log.SetFlags(log.Ldate | log.Ltime)
 
 	// open the log file
-	logFile, err := openLogFile(logPath, "app", ".log")
+	logFile, err := os.OpenFile(buildFullLogName(logPath, "app", ".log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
 		return err
@@ -159,18 +160,8 @@ func setupLog(logPath string) error {
 	return nil
 }
 
-// Open the log file
-func openLogFile(logPath string, logPrefix string, logExtension string) (*os.File, error) {
-
-	// get the full file name / path
-	fileName := getFullLogName(logPath, logPrefix, logExtension)
-
-	// open the log file
-	return os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-}
-
 // build the full log file name
-func getFullLogName(logPath string, logPrefix string, logExtension string) string {
+func buildFullLogName(logPath string, logPrefix string, logExtension string) string {
 	if !strings.HasSuffix(logPath, "/") {
 		logPath += "/"
 	}

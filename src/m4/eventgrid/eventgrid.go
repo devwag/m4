@@ -32,6 +32,7 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 			return
 		}
 
+		// TODO - future versions of event grid may send more than one message in a request
 		env = msg[0]
 
 		// validate the event grid envelope
@@ -80,7 +81,7 @@ func ValidateEnvelope(env *Envelope) error {
 		return errors.New("Event Grid Envelope: missing Data")
 	}
 
-	// TODO - add more validations
+	// TODO - add more validations?
 	return nil
 }
 
