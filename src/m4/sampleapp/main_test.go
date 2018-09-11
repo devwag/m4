@@ -20,18 +20,18 @@ func TestMain(t *testing.T) {
 }
 
 // TODO - this isn't working :(
-func testFlags(t *testing.T) {
+// func testFlags(t *testing.T) {
 
-	lp, err := validateFlags()
+// 	lp, err := validateFlags()
 
-	if err != nil {
-		t.Error(err)
-	}
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	if lp != "./logs/" {
-		t.Error("invalid logPath:", lp)
-	}
-}
+// 	if lp != "./logs/" {
+// 		t.Error("invalid logPath:", lp)
+// 	}
+// }
 
 // test the main() app
 
