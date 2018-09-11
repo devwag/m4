@@ -18,7 +18,7 @@ do
 #  rm $file
   go build m4/sampleapp
 
-  ./sampleapp logpath=${logpath} reqlogpath=${reqlogpath}
+  ./sampleapp logpath=${logpath}
   sleep .1
   rm -f app
 done

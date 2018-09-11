@@ -11,8 +11,7 @@ RUN apk --no-cache add ca-certificates
 COPY sampleapp /root
 
 ENV logpath /home/LogFiles/
-ENV reqlogpath /home/LogFiles/
 
-CMD /root/sampleapp logpath=${logpath} reqlogpath=${reqlogpath}
+CMD /root/sampleapp logpath=${logpath}
 
 

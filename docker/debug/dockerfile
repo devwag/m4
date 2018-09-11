@@ -15,7 +15,6 @@ COPY .bashrc /root
 COPY runapp.sh /root
 
 ENV logpath /home/LogFiles/
-ENV reqlogpath /home/LogFiles/
 
 # get the code from git repo
 RUN cd /root && \
