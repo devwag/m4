@@ -7,7 +7,6 @@ import (
 	"m4/logb"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 )
@@ -26,14 +25,14 @@ func testFlags(t *testing.T) {
 }
 
 // test the main() app
-func TestMainFunc(t *testing.T) {
-	go main()
-	time.Sleep(500 * time.Millisecond)
+// func TestMainFunc(t *testing.T) {
+// 	go main()
+// 	time.Sleep(500 * time.Millisecond)
 
-	osChan <- os.Interrupt
+// 	osChan <- os.Interrupt
 
-	time.Sleep(500 * time.Millisecond)
-}
+// 	time.Sleep(500 * time.Millisecond)
+// }
 
 // test person handler
 func TestPersonHandler(t *testing.T) {
