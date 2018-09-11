@@ -3,8 +3,24 @@ package logb
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
+
+func TestMain(t *testing.T) {
+
+	if err := os.MkdirAll("./logs/", 0666); err != nil {
+		t.Error(err)
+	}
+}
+func TestSetLogFile(t *testing.T) {
+
+	os.MkdirAll("./logs/", 0666)
+
+	if err := SetLogFile("./logs/app.log"); err != nil {
+		t.Error(err)
+	}
+}
 
 func TestLogb(t *testing.T) {
 
