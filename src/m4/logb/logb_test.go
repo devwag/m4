@@ -19,12 +19,12 @@ func TestMain(t *testing.T) {
 // permission denied on file open
 // the mkdir call succeeds
 // works fine testing local
-// func TestSetLogFile(t *testing.T) {
+func TestSetLogFile(t *testing.T) {
 
-// 	if err := SetLogFile("./logs/test.log"); err != nil {
-// 		t.Error(err)
-// 	}
-// }
+	if err := SetLogFile("test.log"); err != nil {
+		t.Error(err)
+	}
+}
 
 func TestLogb(t *testing.T) {
 
