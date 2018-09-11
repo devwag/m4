@@ -37,14 +37,14 @@ func TestMain(t *testing.T) {
 
 // TODO - this is failing in CI/CD - need to debug
 
-// func TestMainFunc(t *testing.T) {
-// 	go main()
-// 	time.Sleep(500 * time.Millisecond)
+func TestMainFunc(t *testing.T) {
+	go main()
+	time.Sleep(500 * time.Millisecond)
 
-// 	osChan <- os.Interrupt
+	osChan <- os.Interrupt
 
-// 	time.Sleep(500 * time.Millisecond)
-// }
+	time.Sleep(500 * time.Millisecond)
+}
 
 // test person handler
 func TestPersonHandler(t *testing.T) {
