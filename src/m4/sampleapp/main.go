@@ -80,9 +80,6 @@ func validateFlags() (string, error) {
 	p := flag.Int("port", port, "TCP port to listen on")
 	flag.Parse()
 
-	fmt.Println("logpath", *logPath)
-	fmt.Println("port", *p)
-
 	// validate the logpath flag
 	// TODO - add more checks
 	lp := strings.TrimSpace(*logPath)
