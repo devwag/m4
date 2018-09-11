@@ -1,3 +1,0 @@
-do not delete this directory
-it is necessary for CI/CD to work
-this is where the log files get written during CI/CD
