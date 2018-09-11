@@ -7,10 +7,19 @@ import (
 	"m4/logb"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
 
+func TestMain(t *testing.T) {
+
+	if err := os.MkdirAll("./logs/", 0666); err != nil {
+		t.Error(err)
+	}
+}
+
+// TODO - this isn't working :(
 func testFlags(t *testing.T) {
 
 	lp, err := validateFlags()
