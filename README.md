@@ -11,30 +11,37 @@ This project is an Event Grid Web Hook written in Go that supports receiving and
 * Developer workstation will need
   * VSTS / Git access
   * Go 1.10 (I can't get Delve to work on 1.11 Windows ...)
-  * Azure subscription access for SSH access
-    * TODO - what level access is required for SSH?
+  * Azure subscription access for SSH access (optional)
 
 ## Getting Started
 
-* docker -  contains docker build files (currently for developer deployment)
-* sendmessage - a simple app for sending messages to event grid
-* src/m4/sampleapp - contains the Web Hook that is deployed to: m4.azurewebsites.net
-* src/m4/logb - a simple log wrapper for chaining requests
-* src/m4/eventgrid - handler that parses the event grid "envelope" and handles validation events
+* docker
+  * contains docker build files for debug and release
+* sendmessage
+  * a simple app / shell script for sending a message to event grid
+    * not part of the package
+* src/m4
+  * sampleapp
+    * contains a sample Web Hook implementation
+  * logb
+    * simple log wrapper for chaining requests
+  * eventgrid
+    * handler that parses the event grid "envelope" and handles validation events
 
 ## Flags
 
 * port - int - 8080 - port for web hook to listen on
-* logpath - string - /home/LogFiles/ - path to the log files
+* logpath - string - ./logs/ - path to the log files
   * /home/LogFiles/ is the CIFS share mounted by App Service
+  * the docker files override the default and use /home/LogFiles
+  * using /home/LogFiles is problematic on the Mac because of permissions on /home
 
 ## Sharing Plan
 
 * Event Grid webhook sample for App Services / Go
-* SSHD sample for  App Service / Go
-* Multi stage build sample for App Services / Go
+* Setting up CI/CD for App Services / Go in Azure DevOps
+* Debugging App Services with SSH and Go
 * App Insights integration for App Services / Go
-* Securing secrets (Key Vault?) for App Services / Go
 
 ## To Do List
 
