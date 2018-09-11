@@ -17,7 +17,7 @@ func TestSetLogFile(t *testing.T) {
 
 	os.MkdirAll("./logs/", 0666)
 
-	if err := SetLogFile("./logs/app.log"); err != nil {
+	if err := SetLogFile("./logs/test.log"); err != nil {
 		t.Error(err)
 	}
 }
