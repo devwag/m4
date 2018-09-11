@@ -172,7 +172,7 @@ func openLogFile(logPath string, logPrefix string, logExtension string) (*os.Fil
 	return os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 }
 
-// build the full log file name and make the directory if necessary
+// build the full log file name
 func getFullLogName(logPath string, logPrefix string, logExtension string) string {
 	if !strings.HasSuffix(logPath, "/") {
 		logPath += "/"
