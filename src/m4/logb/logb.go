@@ -15,23 +15,23 @@ import (
 
 var reqLog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
-// SetLogPath - initialize the log file and add multi writer
-func SetLogPath(reqPath string) error {
-	reqPath = strings.TrimSpace(reqPath)
+// SetLogFile - initialize the log file and add multi writer
+func SetLogFile(logFile string) error {
+	logFile = strings.TrimSpace(logFile)
 
-	if reqPath == "" {
+	if logFile == "" {
 		return errors.New("ERROR: logbpath cannot be blank")
 	}
 
 	// open the logfile
-	logFile, err := openLogFile(reqPath)
+	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
 		return err
 	}
 
 	// setup the multi writer
-	wrt := io.MultiWriter(os.Stdout, logFile)
+	wrt := io.MultiWriter(os.Stdout, f)
 	reqLog.SetOutput(wrt)
 
 	return nil
@@ -77,29 +77,4 @@ func (r *ResponseLogger) Write(buf []byte) (int, error) {
 	}
 
 	return n, err
-}
-
-// Open the log file
-func openLogFile(logPath string) (*os.File, error) {
-
-	if !strings.HasSuffix(logPath, "/") {
-		logPath += "/"
-	}
-
-	// make the log directory if it doesn't exist
-	if err := os.MkdirAll(logPath, 0666); err != nil {
-		return nil, err
-	}
-
-	fileName := logPath + "request"
-
-	// use instance ID to differentiate log files between instances in App Services
-	if iid := os.Getenv("WEBSITE_ROLE_INSTANCE_ID"); iid != "" {
-		fileName += "_" + strings.TrimSpace(iid)
-	}
-
-	fileName += ".log"
-
-	// open the log file
-	return os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 }

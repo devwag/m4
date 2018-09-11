@@ -27,19 +27,53 @@ var osChan = make(chan os.Signal, 1)
 // port to listen on (can be changed with -port option)
 var port = 8080
 
+// application startup
+func main() {
+	// validate command line flags
+	logPath, err := validateFlags()
+
+	if err != nil {
+		flag.PrintDefaults()
+		log.Fatal(err)
+	}
+
+	// setup the log multi writer
+	if err = setupLogs(logPath); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Listening on port: ", port)
+
+	// run the server
+	// this blocks until the http server shuts down
+	if err := runServer(port); err != nil {
+		log.Println("ERROR:", err)
+	}
+
+	log.Println("Server Exit")
+}
+
+// setupLogs - sets up the multi writer for the log files
 func setupLogs(logPath string) error {
+	// make the log directory if it doesn't exist
+	if err := os.MkdirAll(logPath, 0666); err != nil {
+		return err
+	}
+
+	// setup app log multiwriter
 	if err := setupLog(logPath); err != nil {
 		return err
 	}
 
 	// setup logb multiwriter
-	if err := logb.SetLogPath(logPath); err != nil {
+	if err := logb.SetLogFile(getFullLogName(logPath, "request", ".log")); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+// validate the command line flags
 func validateFlags() (string, error) {
 	// read the flags
 	logPath := flag.String("logpath", "./logs/", "path to write log files")
@@ -65,30 +99,6 @@ func validateFlags() (string, error) {
 	}
 
 	return lp, nil
-}
-
-// application startup
-func main() {
-	logPath, err := validateFlags()
-
-	if err != nil {
-		flag.PrintDefaults()
-		log.Fatal(err)
-	}
-
-	// setup the log multi writer
-	if err = setupLogs(logPath); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Listening on port: ", port)
-
-	// run the server
-	if err := runServer(port); err != nil {
-		log.Println("ERROR:", err)
-	}
-
-	log.Println("Server Exit")
 }
 
 func runServer(port int) error {
@@ -155,25 +165,17 @@ func setupLog(logPath string) error {
 // Open the log file
 func openLogFile(logPath string, logPrefix string, logExtension string) (*os.File, error) {
 
-	fileName, err := getFullLogName(logPath, logPrefix, logExtension)
-
-	if err != nil {
-		return nil, err
-	}
+	// get the full file name / path
+	fileName := getFullLogName(logPath, logPrefix, logExtension)
 
 	// open the log file
 	return os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 }
 
-// get the full log file name and make the directory if necessary
-func getFullLogName(logPath string, logPrefix string, logExtension string) (string, error) {
+// build the full log file name and make the directory if necessary
+func getFullLogName(logPath string, logPrefix string, logExtension string) string {
 	if !strings.HasSuffix(logPath, "/") {
 		logPath += "/"
-	}
-
-	// make the log directory if it doesn't exist
-	if err := os.MkdirAll(logPath, 0666); err != nil {
-		return "", err
 	}
 
 	fileName := logPath + logPrefix
@@ -188,5 +190,5 @@ func getFullLogName(logPath string, logPrefix string, logExtension string) (stri
 		logExtension = "." + logExtension
 	}
 
-	return fileName + logExtension, nil
+	return fileName + logExtension
 }
