@@ -75,7 +75,7 @@ func setupLogs(logPath string) error {
 // validate the command line flags
 func validateFlags() (string, error) {
 	// read the flags
-	logPath := flag.String("logpath", "./logs/", "path to write log files")
+	logPath := flag.String("logpath", "./", "path to write log files")
 	p := flag.Int("port", port, "TCP port to listen on")
 	flag.Parse()
 
