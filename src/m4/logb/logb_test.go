@@ -12,10 +12,14 @@ func TestMain(t *testing.T) {
 	if err := os.MkdirAll("./logs/", 0666); err != nil {
 		t.Error(err)
 	}
+
+	if err := os.MkdirAll("/home/LogFiles", 0666); err != nil {
+		t.Error(err)
+	}
 }
 func TestSetLogFile(t *testing.T) {
 
-	if err := SetLogFile("./logs/test.log"); err != nil {
+	if err := SetLogFile("/home/LogFiles/test.log"); err != nil {
 		t.Error(err)
 	}
 }
