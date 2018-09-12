@@ -14,10 +14,11 @@ COPY sshd_config /etc/ssh/
 COPY .bashrc /root
 COPY runapp.sh /root
 
+ENV logpath /home/LogFiles/
 
 # get the code from git repo
 RUN cd /root && \
-git clone -b ci-cd https://github.com/bartr/m4  && \
+git clone -b master https://github.com/bartr/m4  && \
 cd /root/m4/src/m4/sampleapp && \
 go get ./... && \
 cd /root

@@ -20,7 +20,7 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 		var msg []Envelope
 
 		// validate the request
-		if r.Body != nil {
+		if r.Body == nil {
 			logError(w, errors.New("No request body"))
 			return
 		}
@@ -32,6 +32,7 @@ func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) h
 			return
 		}
 
+		// TODO - future versions of event grid may send more than one message in a request
 		env = msg[0]
 
 		// validate the event grid envelope
@@ -80,7 +81,7 @@ func ValidateEnvelope(env *Envelope) error {
 		return errors.New("Event Grid Envelope: missing Data")
 	}
 
-	// TODO - add more validations
+	// TODO - add more validations?
 	return nil
 }
 
@@ -91,10 +92,9 @@ func handleValidate(w http.ResponseWriter, msg *Envelope) error {
 		ValidationCode string `json:"validationCode"`
 		ValidationURL  string `json:"validationUrl"`
 	}
-	err := json.Unmarshal(msg.Data, &vData)
 
 	// handle the json error
-	if err != nil {
+	if err := json.Unmarshal(msg.Data, &vData); err != nil {
 		return err
 	}
 

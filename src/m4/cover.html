@@ -1,0 +1,526 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">m4\eventgrid\eventgrid.go (92.1%)</option>
+				
+				<option value="file1">m4\logb\logb.go (55.0%)</option>
+				
+				<option value="file2">m4\sampleapp\handlers.go (57.1%)</option>
+				
+				<option value="file3">m4\sampleapp\main.go (75.9%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package eventgrid
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+        "log"
+        "net/http"
+)
+
+// TODO - Log / Reject bad EG messages
+// TODO - handle upcoming EG change that can send multiple items in a message
+
+// Handler - handle the event grid message
+func Handler(next func(w http.ResponseWriter, r *http.Request, env *Envelope)) http.Handler <span class="cov8" title="1">{
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+
+                var env Envelope
+                var err error
+                var msg []Envelope
+
+                // validate the request
+                if r.Body == nil </span><span class="cov8" title="1">{
+                        logError(w, errors.New("No request body"))
+                        return
+                }</span>
+                <span class="cov8" title="1">defer r.Body.Close()
+
+                // decode the event grid message from the body
+                if err = json.NewDecoder(r.Body).Decode(&amp;msg); err != nil </span><span class="cov8" title="1">{
+                        logError(w, err)
+                        return
+                }</span>
+
+                // TODO - future versions of event grid may send more than one message in a request
+                <span class="cov8" title="1">env = msg[0]
+
+                // validate the event grid envelope
+                if err = ValidateEnvelope(&amp;env); err != nil </span><span class="cov8" title="1">{
+                        logError(w, err)
+                        return
+                }</span>
+
+                // handle event grid subscription validation events
+                <span class="cov8" title="1">if env.EventType == "Microsoft.EventGrid.SubscriptionValidationEvent" </span><span class="cov8" title="1">{
+                        r.URL.RawQuery = "validate"
+
+                        // handle the event grid validation event
+                        if err = handleValidate(w, &amp;env); err != nil </span><span class="cov0" title="0">{
+                                logError(w, err)
+                                return
+                        }</span>
+                } else<span class="cov8" title="1"> {
+                        // call the next handler
+                        if next != nil </span><span class="cov8" title="1">{
+                                next(w, r, &amp;env)
+                        }</span>
+                }
+        })
+}
+
+// log the error and send a 500 status code
+func logError(w http.ResponseWriter, err error) <span class="cov8" title="1">{
+        // log any error and return 500
+        if err != nil </span><span class="cov8" title="1">{
+                log.Println(err)
+                w.WriteHeader(500)
+        }</span>
+}
+
+// ValidateEnvelope - validates a message grid envelope contains required fields
+func ValidateEnvelope(env *Envelope) error <span class="cov8" title="1">{
+        // verify event grid ID
+        if env.ID == "" </span><span class="cov8" title="1">{
+                return errors.New("Event Grid Envelope: missing ID")
+        }</span>
+
+        // verify event grid has data
+        // TODO - should we do this? are empty data messages possible?
+        <span class="cov8" title="1">if env.Data == nil </span><span class="cov8" title="1">{
+                return errors.New("Event Grid Envelope: missing Data")
+        }</span>
+
+        // TODO - add more validations?
+        <span class="cov8" title="1">return nil</span>
+}
+
+// handle the event grid webhook validation request
+func handleValidate(w http.ResponseWriter, msg *Envelope) error <span class="cov8" title="1">{
+        // get the validationCode from the json (that's all we care about)
+        var vData struct {
+                ValidationCode string `json:"validationCode"`
+                ValidationURL  string `json:"validationUrl"`
+        }
+
+        // handle the json error
+        if err := json.Unmarshal(msg.Data, &amp;vData); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // return the validationCode as json
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(200)
+
+        // echo the validation code back to event grid
+        fmt.Fprintf(w, "{ \"validationResponse\": \"%v\" }", vData.ValidationCode)
+        log.Println("EventGridValidation: Success")
+
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package logb
+
+import (
+        "errors"
+        "io"
+        "log"
+        "net/http"
+        "os"
+        "strings"
+        "time"
+)
+
+// TODO - should we replace with Gorilla logger?
+// TODO - add Apache log file support
+
+var reqLog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+// SetLogFile - initialize the log file and add multi writer
+func SetLogFile(logFile string) error <span class="cov0" title="0">{
+        logFile = strings.TrimSpace(logFile)
+
+        if logFile == "" </span><span class="cov0" title="0">{
+                return errors.New("ERROR: logbpath cannot be blank")
+        }</span>
+
+        // open the logfile
+        <span class="cov0" title="0">f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // setup the multi writer
+        <span class="cov0" title="0">wrt := io.MultiWriter(os.Stdout, f)
+        reqLog.SetOutput(wrt)
+
+        return nil</span>
+}
+
+//Handler - http handler that writes to log file(s)
+func Handler(next http.Handler) http.Handler <span class="cov8" title="1">{
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+
+                wr := &amp;ResponseLogger{
+                        ResponseWriter: w,
+                        status:         0,
+                        start:          time.Now().UTC()}
+
+                if next != nil </span><span class="cov8" title="1">{
+                        next.ServeHTTP(wr, r)
+                }</span>
+
+                <span class="cov8" title="1">reqLog.Println(wr.status, time.Now().UTC().Sub(wr.start).Nanoseconds()/100000, r.Method, r.URL.Path, r.URL.RawQuery)</span>
+        })
+}
+
+// ResponseLogger - wrap http.ResponseWriter to include status and size
+type ResponseLogger struct {
+        http.ResponseWriter
+        status int
+        size   int
+        start  time.Time
+}
+
+// WriteHeader - wraps http.WriteHeader
+func (r *ResponseLogger) WriteHeader(status int) <span class="cov8" title="1">{
+        // store status for logging
+        r.status = status
+
+        r.ResponseWriter.WriteHeader(status)
+}</span>
+
+// Write - wraps http.Write
+func (r *ResponseLogger) Write(buf []byte) (int, error) <span class="cov8" title="1">{
+        n, err := r.ResponseWriter.Write(buf)
+
+        // store bytes written for logging
+        if err == nil </span><span class="cov8" title="1">{
+                r.size += n
+        }</span>
+
+        <span class="cov8" title="1">return n, err</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package main
+
+import (
+        "encoding/json"
+        "log"
+        "m4/eventgrid"
+        "net/http"
+)
+
+// this is the structure for the data portion of event grid messages
+type person struct {
+        FirstName string `json:"firstName"`
+        LastName  string `json:"lastName"`
+}
+
+// handle event grid "person" messages
+// w and r are standard http.Handler params
+// env is the event grid envelope that was parsed by the event grid handler
+func personHandler(w http.ResponseWriter, r *http.Request, env *eventgrid.Envelope) <span class="cov8" title="1">{
+
+        // get the values from env.Data
+        var p person
+
+        if err := json.Unmarshal(env.Data, &amp;p); err != nil </span><span class="cov0" title="0">{
+                w.WriteHeader(500)
+                log.Println("ERROR:", err)
+                return
+        }</span>
+
+        <span class="cov8" title="1">w.WriteHeader(200)
+
+        // event grid doesn't inspect the body on a 200
+
+        log.Println("person Handler: ", env.ID, p.FirstName, p.LastName)</span>
+
+        // TODO this is where you would process the "person message"
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package main
+
+import (
+        "context"
+        "errors"
+        "flag"
+        "io"
+        "log"
+        "os/signal"
+
+        // TODO should change these to github.com/bartr/m4 once stable
+        "m4/eventgrid"
+        "m4/logb"
+        "net/http"
+        "os"
+        "strconv"
+        "strings"
+        "time"
+
+        "github.com/gorilla/mux"
+)
+
+// channel used to send os.Interrupts
+var osChan = make(chan os.Signal, 1)
+
+// port to listen on (can be changed with -port option)
+var port = 8080
+
+// application startup
+func main() <span class="cov8" title="1">{
+        // validate command line flags
+        logPath, err := validateFlags()
+
+        if err != nil </span><span class="cov0" title="0">{
+                flag.PrintDefaults()
+                log.Fatal(err)
+        }</span>
+
+        // setup the log multi writer
+        <span class="cov8" title="1">if err = setupLogs(logPath); err != nil </span><span class="cov0" title="0">{
+                log.Fatal(err)
+        }</span>
+
+        <span class="cov8" title="1">log.Println("Listening on port: ", port)
+
+        // run the server
+        // this blocks until the http server shuts down
+        if err := runServer(port); err != nil </span><span class="cov0" title="0">{
+                log.Println("ERROR:", err)
+        }</span>
+
+        <span class="cov8" title="1">log.Println("Server Exit")</span>
+}
+
+// setupLogs - sets up the multi writer for the log files
+func setupLogs(logPath string) error <span class="cov8" title="1">{
+        // make the log directory if it doesn't exist
+        if err := os.MkdirAll(logPath, 0666); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // setup app log multiwriter
+        <span class="cov8" title="1">if err := setupLog(logPath); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // setup logb multiwriter
+        <span class="cov8" title="1">if err := logb.SetLogFile(buildFullLogName(logPath, "request", ".log")); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// validate the command line flags
+func validateFlags() (string, error) <span class="cov8" title="1">{
+        // read the flags
+        logPath := flag.String("logpath", "./logs/", "path to write log files")
+        p := flag.Int("port", port, "TCP port to listen on")
+        flag.Parse()
+
+        // validate the logpath flag
+        // TODO - add more checks
+        lp := strings.TrimSpace(*logPath)
+        if lp == "" </span><span class="cov0" title="0">{
+                return "", errors.New("invalid -logpath flag")
+        }</span>
+
+        // validate the port flag
+        <span class="cov8" title="1">if *p &gt;= 0 &amp;&amp; *p &lt;= 65535 </span><span class="cov8" title="1">{
+                // set the listen port
+                port = *p
+        }</span> else<span class="cov0" title="0"> {
+                return lp, errors.New("invalid -port flag")
+        }</span>
+
+        <span class="cov8" title="1">return lp, nil</span>
+}
+
+// setup and run the web server
+// this blocks until the web server exits
+func runServer(port int) error <span class="cov8" title="1">{
+
+        // use gorilla mux
+        r := mux.NewRouter()
+
+        // this is our only handler
+        // chain the handlers together as middleware
+        // app services does https offloading, so check for the x-forwarded-proto header
+        // only accept POST requests
+        r.Handle("/person", logb.Handler(eventgrid.Handler(personHandler))).Methods("POST").Headers("x-forwarded-proto", "https")
+        http.Handle("/", r)
+
+        // setup the server
+        srv := &amp;http.Server{
+                Handler:      r,
+                Addr:         ":" + strconv.Itoa(port),
+                WriteTimeout: 5 * time.Second,
+                ReadTimeout:  5 * time.Second,
+        }
+
+        // run webserver in a Go routine so we can cancel
+        go func() </span><span class="cov8" title="1">{
+                if err := srv.ListenAndServe(); err != nil </span><span class="cov8" title="1">{
+                        log.Println("ERROR:", err)
+                }</span>
+        }()
+
+        // We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
+        <span class="cov8" title="1">signal.Notify(osChan, os.Interrupt)
+
+        // Block until we receive our signal
+        &lt;-osChan
+
+        // Create a deadline to wait for
+        ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+        defer cancel()
+
+        // Doesn't block if no connections, but will otherwise wait until the timeout deadline
+        return srv.Shutdown(ctx)</span>
+}
+
+// setup log multi writer
+func setupLog(logPath string) error <span class="cov8" title="1">{
+
+        // prepend date and time to log entries
+        log.SetFlags(log.Ldate | log.Ltime)
+
+        // open the log file
+        logFile, err := os.OpenFile(buildFullLogName(logPath, "app", ".log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // setup a multiwriter to log to file and stdout
+        <span class="cov8" title="1">wrt := io.MultiWriter(os.Stdout, logFile)
+        log.SetOutput(wrt)
+
+        return nil</span>
+}
+
+// build the full log file name
+func buildFullLogName(logPath string, logPrefix string, logExtension string) string <span class="cov8" title="1">{
+        if !strings.HasSuffix(logPath, "/") </span><span class="cov0" title="0">{
+                logPath += "/"
+        }</span>
+
+        <span class="cov8" title="1">fileName := logPath + logPrefix
+
+        // use instance ID to differentiate log files between instances in App Services
+        if iid := os.Getenv("WEBSITE_ROLE_INSTANCE_ID"); iid != "" </span><span class="cov0" title="0">{
+                fileName += "_" + strings.TrimSpace(iid)
+        }</span>
+
+        // make sure logExtension has a period
+        <span class="cov8" title="1">if !strings.HasPrefix(logExtension, ".") </span><span class="cov0" title="0">{
+                logExtension = "." + logExtension
+        }</span>
+
+        <span class="cov8" title="1">return fileName + logExtension</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

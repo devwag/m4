@@ -1,6 +1,7 @@
 package logb
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -10,29 +11,30 @@ import (
 )
 
 // TODO - should we replace with Gorilla logger?
-
-// TODO - mkdir -p logFilePath
-// TODO - use flag for logfilepath
 // TODO - add Apache log file support
-// TODO - add instance id to file name
 
 var reqLog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
-func init() {
-	var logFilePath = "/home/LogFiles/"
+// SetLogFile - initialize the log file and add multi writer
+func SetLogFile(logFile string) error {
+	logFile = strings.TrimSpace(logFile)
 
-	if !strings.HasSuffix(logFilePath, "/") {
-		logFilePath += "/"
+	if logFile == "" {
+		return errors.New("ERROR: logbpath cannot be blank")
 	}
 
-	logFile, err := os.OpenFile(logFilePath+"request.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	// open the logfile
+	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
-		log.Println(err)
-	} else {
-		wrt := io.MultiWriter(os.Stdout, logFile)
-		reqLog.SetOutput(wrt)
+		return err
 	}
+
+	// setup the multi writer
+	wrt := io.MultiWriter(os.Stdout, f)
+	reqLog.SetOutput(wrt)
+
+	return nil
 }
 
 //Handler - http handler that writes to log file(s)
@@ -62,15 +64,20 @@ type ResponseLogger struct {
 
 // WriteHeader - wraps http.WriteHeader
 func (r *ResponseLogger) WriteHeader(status int) {
+	// store status for logging
 	r.status = status
+
 	r.ResponseWriter.WriteHeader(status)
 }
 
 // Write - wraps http.Write
 func (r *ResponseLogger) Write(buf []byte) (int, error) {
 	n, err := r.ResponseWriter.Write(buf)
+
+	// store bytes written for logging
 	if err == nil {
 		r.size += n
 	}
+
 	return n, err
 }

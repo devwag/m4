@@ -12,6 +12,31 @@ import (
 	"time"
 )
 
+func TestMain(t *testing.T) {
+
+	if err := os.MkdirAll("./logs/", 0666); err != nil {
+		t.Error(err)
+	}
+}
+
+// TODO - this isn't working :(
+// func testFlags(t *testing.T) {
+
+// 	lp, err := validateFlags()
+
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+
+// 	if lp != "./logs/" {
+// 		t.Error("invalid logPath:", lp)
+// 	}
+// }
+
+// test the main() app
+
+// TODO - this is failing in CI/CD - need to debug
+
 func TestMainFunc(t *testing.T) {
 	go main()
 	time.Sleep(500 * time.Millisecond)
@@ -21,6 +46,7 @@ func TestMainFunc(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 }
 
+// test person handler
 func TestPersonHandler(t *testing.T) {
 
 	e, err := genMessage(t)
@@ -41,10 +67,6 @@ func TestPersonHandler(t *testing.T) {
 
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err)
-	}
-
 	if w.Code != 200 {
 		t.Error("Return Code: ", w.Code)
 	}
@@ -63,7 +85,7 @@ func genMessage(t *testing.T) ([]byte, error) {
 	env.Data, err = json.Marshal(&p)
 
 	if err != nil {
-		t.Error(err)
+		return nil, err
 	}
 
 	var wrapper []eventgrid.Envelope

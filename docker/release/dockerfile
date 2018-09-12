@@ -10,6 +10,8 @@ RUN apk --no-cache add ca-certificates
 
 COPY sampleapp /root
 
-CMD /root/sampleapp
+ENV logpath /home/LogFiles/
+
+CMD /root/sampleapp logpath=${logpath}
 
 

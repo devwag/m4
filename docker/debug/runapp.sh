@@ -3,8 +3,6 @@ cd /root
 
 service ssh start
 
-mkdir -p /home/LogFiles
-
 file=restart.txt
 echo "restart" > $file
 
@@ -19,7 +17,8 @@ while [ -f "$file" ]
 do
 #  rm $file
   go build m4/sampleapp
-  ./sampleapp
+
+  ./sampleapp logpath=${logpath}
   sleep .1
   rm -f app
 done

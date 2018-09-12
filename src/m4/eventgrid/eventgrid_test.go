@@ -17,13 +17,10 @@ func TestGet(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	h := Handler(nil)
+	h := Handler(testHandler)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
+	// this should fail
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -40,13 +37,10 @@ func TestEmptyBody(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	h := Handler(nil)
+	h := Handler(testHandler)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
+	// this should fail
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -65,12 +59,8 @@ func TestGoodBody(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	h := Handler(nil)
+	h := Handler(testHandler)
 	h.ServeHTTP(w, r)
-
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
 
 	if w.Code != 200 {
 		t.Error("Error Code: ", w.Code)
@@ -90,13 +80,10 @@ func TestBadJson(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	h := Handler(nil)
+	h := Handler(testHandler)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
+	// this should fail
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -115,13 +102,10 @@ func TestMissingId(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	h := Handler(nil)
+	h := Handler(testHandler)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
+	// this should fail
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -140,13 +124,10 @@ func TestMissingData(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	h := Handler(nil)
+	h := Handler(testHandler)
 	h.ServeHTTP(w, r)
 
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
-
+	// this should fail
 	if w.Code != 500 {
 		t.Error("Error Code: ", w.Code)
 	}
@@ -164,14 +145,14 @@ func TestEventGridValidation(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	h := Handler(nil)
+	h := Handler(testHandler)
 	h.ServeHTTP(w, r)
-
-	if err != nil {
-		t.Error("Request Error: ", err.Error())
-	}
 
 	if w.Code != 200 {
 		t.Error("Error Code: ", w.Code)
 	}
+}
+
+func testHandler(w http.ResponseWriter, r *http.Request, env *Envelope) {
+	w.WriteHeader(200)
 }
