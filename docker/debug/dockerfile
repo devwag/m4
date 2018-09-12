@@ -14,8 +14,6 @@ COPY sshd_config /etc/ssh/
 COPY .bashrc /root
 COPY runapp.sh /root
 
-ENV logpath /home/LogFiles/
-
 # get the code from git repo
 RUN cd /root && \
 git clone -b master https://github.com/bartr/m4  && \
