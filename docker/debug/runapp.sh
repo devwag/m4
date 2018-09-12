@@ -16,9 +16,9 @@ cd /root
 while [ -f "$file" ]
 do
 #  rm $file
-  go build m4/sampleapp
+  go build m4/samplewebhook
 
-  ./sampleapp logpath=${logpath}
+  ./samplewebhook logpath=${logpath}
   sleep .1
   rm -f app
 done

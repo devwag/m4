@@ -1,17 +1,15 @@
 FROM alpine:latest
 
-RUN mkdir -p /root
+#RUN mkdir -p /root
 
-WORKDIR /root/
+#WORKDIR /root/
 
 EXPOSE 8080
 
-RUN apk --no-cache add ca-certificates
+#RUN apk --no-cache add ca-certificates
 
-COPY sampleapp /root
+COPY samplewebhook .
 
-ENV logpath /home/LogFiles/
-
-CMD /root/sampleapp logpath=${logpath}
+CMD ./samplewebhook -logpath=./logs
 
 

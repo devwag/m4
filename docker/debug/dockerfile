@@ -1,4 +1,4 @@
-FROM golang:1.10-stretch
+FROM golang:1.11-stretch
 
 # add SSHD support to the base go container
 RUN echo "root:Docker!" | chpasswd && \
@@ -19,8 +19,8 @@ ENV logpath /home/LogFiles/
 # get the code from git repo
 RUN cd /root && \
 git clone -b master https://github.com/bartr/m4  && \
-cd /root/m4/src/m4/sampleapp && \
+cd /root/m4/src/m4/samplewebhook && \
 go get ./... && \
 cd /root
 
-CMD /root/runapp.sh
+CMD ./runapp.sh
