@@ -6,11 +6,11 @@ cd /root/m4
 git pull
 cd /root
 
-while [ -f "$file" ]
+while :
 do
   go build m4/samplewebhook
 
   ./samplewebhook -logpath=/home/LogFiles/
   sleep .1
-  rm -f app
+  rm -f samplewebhook
 done
