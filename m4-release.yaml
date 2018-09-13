@@ -1,8 +1,7 @@
-resources:
-- repo: self
-queue:
-  name: Hosted Ubuntu 1604
-steps:
+pool:
+  vmImage: 'Ubuntu 16.04'
+  
+  steps:
 - task: GoTool@0
   displayName: 'Use Go 1.11'
   inputs:
