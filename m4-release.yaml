@@ -21,17 +21,33 @@ steps:
   workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
   displayName: 'go get dependencies'
   
-- script: go fmt -v ./...
+- script: go fmt ./...
   workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
   displayName: 'go fmt'  
 
-- script: go vet -v ./...
+- script: go vet ./...
   workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
   displayName: 'go vet'  
   
 - script: go test -cover ./...
   workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
   displayName: 'Run tests'    
+
+- script: go test ../... -coverprofile=cover.txt
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4/samplewebhook'
+  displayName: 'go cover'    
+  
+
+- script: go tool cover -html=cover.txt -o cover.html
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4/samplewebhook'
+  displayName: 'go cover html'    
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish code coverage'
+  inputs:
+    PathtoPublish: src/m4/samplewebhook/cover.html
+
+    ArtifactName: code-coverage
   
 - script: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo m4/samplewebhook
   workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
