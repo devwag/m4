@@ -1,86 +1,25 @@
 pool:
   vmImage: 'Ubuntu 16.04'
   
-  steps:
-- task: GoTool@0
-  displayName: 'Use Go 1.11'
-  inputs:
-    version: 1.11
+variables:
+  GOBIN:  '$(GOPATH)/bin' # Go binaries path
+  GOROOT: '/usr/local/go1.11' # Go installation path
+  GOPATH: '$(system.defaultWorkingDirectory)/m4' # Go workspace path
+  modulePath: '$(GOPATH)/src/m4/$(build.repository.name)' # Path to the module's code
 
-    goPath: '$(System.DefaultWorkingDirectory)'
-
-
-- task: Go@0
-  displayName: 'go get'
-  inputs:
-    arguments: ./...
-
-    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-
-
-- task: Go@0
-  displayName: 'go fmt'
-  inputs:
-    command: custom
-
-    customCommand: fmt
-
-    arguments: ./...
-
-    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-
-
-- task: Go@0
-  displayName: 'go vet'
-  inputs:
-    command: custom
-
-    customCommand: vet
-
-    arguments: ./...
-
-    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-
-
-- task: Go@0
-  displayName: 'go test'
-  inputs:
-    command: test
-
-    arguments: './... -cover'
-
-    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-
-
-- task: Go@0
-  displayName: 'go build '
-  inputs:
-    command: build
-
-    arguments: '-a -installsuffix cgo m4/samplewebhook'
-
-    workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
-
-
-- task: Docker@1
-  displayName: 'Build Container'
-  inputs:
-    containerregistrytype: 'Container Registry'
-
-    dockerRegistryEndpoint: docker/bartr/m4
-
-    dockerFile: docker/release/dockerfile
-
-    includeLatestTag: true
-
-
-- task: Docker@1
-  displayName: 'Push Container'
-  inputs:
-    containerregistrytype: 'Container Registry'
-
-    dockerRegistryEndpoint: docker/bartr/m4
-
-    command: 'Push an image'
-
-    includeLatestTag: true
+steps:
+- script: |
+    mkdir -p '$(GOBIN)'
+    mkdir -p '$(GOPATH)/pkg'
+    mkdir -p '$(modulePath)'
+    shopt -s extglob
+##    mv !(gopath) '$(modulePath)'
+    echo '##vso[task.prependpath]$(GOBIN)'
+    echo '##vso[task.prependpath]$(GOROOT)/bin'
+  displayName: 'Set up the Go workspace'
+  
+- script: go get -v -t -d ./...
+workingDirectory: '$(system.defaultWorkingDirectory)/m4'
+displayName: 'go get dependencies'
+  
+  
