@@ -18,7 +18,22 @@ steps:
   displayName: 'Set up the Go workspace'
   
 - script: go get ./...
-  workingDirectory: '$(system.defaultWorkingDirectory)/m4'
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
   displayName: 'go get dependencies'
   
+- script: go fmt -v ./...
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+  displayName: 'go fmt'  
+
+- script: go vet -v ./...
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+  displayName: 'go vet'  
+  
+- script: go test -cover ./...
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+  displayName: 'Run tests'    
+  
+- script: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo m4/samplewebhook
+  workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
+  displayName: 'Build'    
   
