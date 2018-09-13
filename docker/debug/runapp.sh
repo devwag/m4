@@ -1,25 +1,16 @@
 #!/bin/sh
-cd /root
-
 service ssh start
-
-file=restart.txt
-echo "restart" > $file
-
-echo "\nStarting server ($WEBSITE_ROLE_INSTANCE_ID) ..."
 
 # git the latest code
 cd /root/m4
 git pull
 cd /root
 
-while [ -f "$file" ]
+while :
 do
-#  rm $file
-  go build m4/sampleapp
+  go build m4/samplewebhook
 
-  ./sampleapp logpath=${logpath}
+  ./samplewebhook -logpath=/home/LogFiles/
   sleep .1
-  rm -f app
+  rm -f samplewebhook
 done
-
