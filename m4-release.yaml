@@ -55,7 +55,6 @@ steps:
 
 - script: |
     docker build -f dockerfile -t bartr/m4 .
-    docker login -u $(dockerId) -p $pswd
   workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
   displayName: 'docker build'
 
