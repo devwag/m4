@@ -1,0 +1,119 @@
+resources:
+- repo: self
+queue:
+  name: Hosted Ubuntu 1604
+steps:
+- task: GoTool@0
+  displayName: 'Use Go 1.11'
+  inputs:
+    version: 1.11
+
+    goPath: '$(System.DefaultWorkingDirectory)'
+
+
+- task: Go@0
+  displayName: 'go get'
+  inputs:
+    arguments: ./...
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+
+
+- task: Go@0
+  displayName: 'go fmt'
+  inputs:
+    command: custom
+
+    customCommand: fmt
+
+    arguments: ./...
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+
+
+- task: Go@0
+  displayName: 'go vet'
+  inputs:
+    command: custom
+
+    customCommand: vet
+
+    arguments: ./...
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+
+
+- task: Go@0
+  displayName: 'go test'
+  inputs:
+    command: test
+
+    arguments: '../... -cover'
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4/samplewebhook'
+
+
+- task: Go@0
+  displayName: 'go cover'
+  inputs:
+    command: test
+
+    arguments: '../... -coverprofile=cover.txt'
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4/samplewebhook'
+
+
+- task: Go@0
+  displayName: 'go cover html'
+  inputs:
+    command: custom
+
+    customCommand: tool
+
+    arguments: 'cover -html=cover.txt -o cover.html'
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4/samplewebhook'
+
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish code coverage'
+  inputs:
+    PathtoPublish: src/m4/samplewebhook/cover.html
+
+    ArtifactName: code-coverage
+
+
+- task: Go@0
+  displayName: 'go build '
+  inputs:
+    command: build
+
+    arguments: m4/samplewebhook
+
+
+- task: Docker@1
+  displayName: 'Build Container'
+  inputs:
+    containerregistrytype: 'Container Registry'
+
+    dockerRegistryEndpoint: docker/bartr/m4
+
+    dockerFile: docker/debug/dockerfile
+
+    imageName: '$(Build.Repository.Name)debug:$(Build.BuildId)'
+
+    includeLatestTag: true
+
+
+- task: Docker@1
+  displayName: 'Push Container'
+  inputs:
+    containerregistrytype: 'Container Registry'
+
+    dockerRegistryEndpoint: docker/bartr/m4
+
+    command: 'Push an image'
+
+    imageName: '$(Build.Repository.Name)debug:$(Build.BuildId)'
+
+    includeLatestTag: true
