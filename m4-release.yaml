@@ -17,8 +17,8 @@ steps:
     echo '##vso[task.prependpath]$(GOROOT)/bin'
   displayName: 'Set up the Go workspace'
   
-- script: go get -v -t -d ./...
-workingDirectory: '$(system.defaultWorkingDirectory)/m4'
-displayName: 'go get dependencies'
+- script: go get ./...
+  workingDirectory: '$(system.defaultWorkingDirectory)/m4'
+  displayName: 'go get dependencies'
   
   
