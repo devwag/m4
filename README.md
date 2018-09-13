@@ -2,26 +2,32 @@
 
 This project is an Event Grid Web Hook written in Go that supports receiving and processing the person message type.
 
-## Notes
-
-** TODO [cover.html](./cover.html) contains the latest code coverage map. The Go tools have some "challenges" building this, so it's not an automated process yet.
-
 ## Developer Prerequisites
 
 * Developer workstation will need
-  * VSTS / Git access
-  * Go 1.10 (I can't get Delve to work on 1.11 Windows ...)
-  * Azure subscription access for SSH access (optional)
+  * Git
+  * Go 1.11
+  * optional
+    * Azure DevOps access to import / edit CI/CD pipelines
+    * Azure subscription access for Kudu / SSH access to debug build
+    * Azure subscription access for Kudu access to release build log files
 
-## Getting Started
+## Repo Organization
+
+* cicd
+  * these are the import files for the CI/CD pipelines
+    * from Azure DevOps / Pipelines / Build, click "new" and choose import a pipeline then specify either the m4-debug-pipeline.json file or the m4-release-pipeline.json file
+  * Note that if you import into a different project, you will have to setup credentials for Docker hub and perhaps github
 
 * docker
   * contains docker build files for debug and release
+
 * sendmessage
   * a simple app / shell script for sending a message to event grid
     * not part of the package
+
 * src/m4
-  * sampleapp
+  * samplewebhook
     * contains a sample Web Hook implementation
   * logb
     * simple log wrapper for chaining requests
@@ -45,11 +51,18 @@ This project is an Event Grid Web Hook written in Go that supports receiving and
 
 ## To Do List
 
-* TODO - PR for app analytics
-* TODO - automate building infrastructure
+* TODO - move these into VSTS as work items / bugs
+* TODO - Pete - Add app analytics
+* TODO - Jeff - automate building infrastructure
 * TODO - add Apache log handler to write Apache style web logs?
 * TODO - automate end to end test
 * TODO - complete and automate performance test
 * TODO - complete and automate scale test
-* TODO - automate cover.html
-  * there's a bug but can be worked around with sed
+* TODO - Jeff suggested defaulting logs to ./ and checking to see if /home/LogFiles exists and, if so, using that folder
+* TODO - verify that the request came from a trusted source
+  * one thought is to put a token in the webhook URL and pull that token from Key Vault
+  * Jeff is looking into other options
+* TODO - bug - Jeff pointed out that the dockerfiles don't have an ARG parameter, so you can't override the flags
+* TODO - do we want to pull the packages from github.com/bartr/m4?
+  * for debugging, I like being able to use the local packages
+  * using the github link, can we pull packages from a different branch than master?
