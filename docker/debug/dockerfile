@@ -18,7 +18,7 @@ COPY runapp.sh /root
 
 # get the code from git repo
 RUN cd /root && \
-git clone -b go111 https://github.com/bartr/m4  && \
+git clone -b master https://github.com/bartr/m4  && \
 cd /root/m4/src/m4/samplewebhook && \
 go get ./... && \
 cd /root
