@@ -53,3 +53,16 @@ steps:
   workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
   displayName: 'Build'    
   
+- task: Docker@1
+  displayName: 'Build Container'
+  inputs:
+    containerregistrytype: 'Container Registry'
+
+    dockerRegistryEndpoint: docker/bartr/m4
+
+    dockerFile: docker/debug/dockerfile
+
+    imageName: '$(Build.Repository.Name)debug:$(Build.BuildId)'
+
+    includeLatestTag: true
+
