@@ -6,6 +6,8 @@ variables:
   GOROOT: '/usr/local/go1.11' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)' # Go workspace path
   modulePath: '$(GOPATH)/src/m4/$(build.repository.name)' # Path to the module's code
+  dockerId: 'bartr'
+  dockerPassword: 'J0shMatt'
 
 steps:
 - script: |
@@ -52,17 +54,9 @@ steps:
 - script: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo m4/samplewebhook
   workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
   displayName: 'Build'    
+
+- script: |
+  docker build -t bartr/m4 .
+  docker login -u $(dockerId) -p $dockerPassword
+  displayName: 'docker build'
   
-- task: Docker@1
-  displayName: 'Build Container'
-  inputs:
-    containerregistrytype: 'Container Registry'
-
-    dockerRegistryEndpoint: docker/bartr/m4
-
-    dockerFile: docker/debug/dockerfile
-
-    imageName: '$(Build.Repository.Name)debug:$(Build.BuildId)'
-
-    includeLatestTag: true
-
