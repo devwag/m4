@@ -53,8 +53,6 @@ steps:
   workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
   displayName: 'Build'    
 
-- script: |
-  docker build -t bartr/m4 .
-  docker login -u $(dockerId) -p $pswd
+- script: docker build -t bartr/m4 .
   displayName: 'docker build'
   
