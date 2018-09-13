@@ -57,6 +57,6 @@ steps:
 
 - script: |
   docker build -t bartr/m4 .
-  docker login -u $(dockerId) -p $dockerPassword
+  docker login -u $(dockerId) -p $(dockerPassword)
   displayName: 'docker build'
   
