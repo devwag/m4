@@ -1,0 +1,87 @@
+resources:
+- repo: self
+queue:
+  name: Hosted Ubuntu 1604
+steps:
+- task: GoTool@0
+  displayName: 'Use Go 1.11'
+  inputs:
+    version: 1.11
+
+    goPath: '$(System.DefaultWorkingDirectory)'
+
+
+- task: Go@0
+  displayName: 'go get'
+  inputs:
+    arguments: ./...
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+
+
+- task: Go@0
+  displayName: 'go fmt'
+  inputs:
+    command: custom
+
+    customCommand: fmt
+
+    arguments: ./...
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+
+
+- task: Go@0
+  displayName: 'go vet'
+  inputs:
+    command: custom
+
+    customCommand: vet
+
+    arguments: ./...
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+
+
+- task: Go@0
+  displayName: 'go test'
+  inputs:
+    command: test
+
+    arguments: './... -cover'
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
+
+
+- task: Go@0
+  displayName: 'go build '
+  inputs:
+    command: build
+
+    arguments: '-a -installsuffix cgo m4/samplewebhook'
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
+
+
+- task: Docker@1
+  displayName: 'Build Container'
+  inputs:
+    containerregistrytype: 'Container Registry'
+
+    dockerRegistryEndpoint: docker/bartr/m4
+
+    dockerFile: docker/release/dockerfile
+
+    includeLatestTag: true
+
+
+- task: Docker@1
+  displayName: 'Push Container'
+  inputs:
+    containerregistrytype: 'Container Registry'
+
+    dockerRegistryEndpoint: docker/bartr/m4
+
+    command: 'Push an image'
+
+    includeLatestTag: true
