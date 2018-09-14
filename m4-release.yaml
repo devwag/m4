@@ -30,15 +30,32 @@ steps:
     PathtoPublish: src/m4/samplewebhook/cover.html
 
     ArtifactName: code-coverage
-  
-- script: |
-    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo m4/samplewebhook
-    docker build -f dockerfile -t bartr/m4 .
-    docker login -u $(dockerId) -p $pswd
-    docker push bartr/m4
-  workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
-  displayName: 'build tasks'
 
-  env:
-    pswd: $(dockerPassword)  
-  
+- script: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo m4/samplewebhook
+  workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
+  displayName: 'build'
+
+- task: Docker@0
+  displayName: 'docker build'
+  inputs:
+    containerregistrytype: 'Container Registry'
+
+    dockerRegistryConnection: m4
+
+    dockerFile: dockerfile
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
+
+- task: Docker@0
+  displayName: 'docker push'
+  inputs:
+    containerregistrytype: 'Container Registry'
+
+    dockerRegistryConnection: m4
+
+    action: 'Push an image'
+
+    includeLatestTag: true
+
+    workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
+
