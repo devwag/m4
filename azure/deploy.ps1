@@ -14,8 +14,7 @@
  .PARAMETER resourceGroupLocation
     Optional, a resource group location. If specified, will try to create a new resource group in this location. If not specified, assumes resource group is existing.
 
- 
- .PARAMETER dnsPrefix
+  .PARAMETER dnsPrefix
     The DNS prefix to be assigned to the application's public end points. The resulting values must me unique for each Azure region
 
  .PARAMETER templateFilePath
@@ -128,14 +127,14 @@ if(!$resourceGroup)
     New-AzureRmResourceGroup -Name $resourceGroupName -Location $resourceGroupLocation
 }
 else{
+    $resourceGroupLocation = (Get-AzureRmResourceGroup -Name $resourceGroupName).Location
     Write-Host "Using existing resource group '$resourceGroupName'";
 }
 
 # Start the deployment
 Write-Host "Starting deployment...";
 if(Test-Path $parametersFilePath) {
-    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -TemplateParameterFile $parametersFilePath -EventGridTopicName $eventGridTopicName;
+    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -TemplateParameterFile $parametersFilePath -EventGridTopicName $eventGridTopicName -location $resourceGroupLocation;
 } else {
-    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -dns_prefix $dnsPrefix;
+    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -dns_prefix $dnsPrefix -location $resourceGroupLocation;
 }
-
