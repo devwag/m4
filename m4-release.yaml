@@ -5,43 +5,25 @@ variables:
   GOBIN:  '$(GOPATH)/bin' # Go binaries path
   GOROOT: '/usr/local/go1.11' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)' # Go workspace path
-  modulePath: '$(GOPATH)/src/m4/$(build.repository.name)' # Path to the module's code
 
 steps:
 - script: |
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
     shopt -s extglob
     echo '##vso[task.prependpath]$(GOBIN)'
     echo '##vso[task.prependpath]$(GOROOT)/bin'
   displayName: 'Set up the Go workspace'
   
-- script: go get ./...
-  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-  displayName: 'go get dependencies'
-  
-- script: go fmt ./...
-  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-  displayName: 'go fmt'  
-
-- script: go vet ./...
-  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-  displayName: 'go vet'  
-  
-- script: go test -cover ./...
-  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4'
-  displayName: 'Run tests'    
-
-- script: go test ../... -coverprofile=cover.txt
+- script: | 
+    go get ../...
+    go fmt ../...
+    go vet ../...
+    go test ../... -coverprofile=cover.txt
+    go tool cover -html=cover.txt -o cover.html
   workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4/samplewebhook'
-  displayName: 'go cover'    
+  displayName: 'go tasks'    
   
-
-- script: go tool cover -html=cover.txt -o cover.html
-  workingDirectory: '$(System.DefaultWorkingDirectory)/src/m4/samplewebhook'
-  displayName: 'go cover html'    
-
 - task: PublishBuildArtifacts@1
   displayName: 'Publish code coverage'
   inputs:
@@ -49,20 +31,13 @@ steps:
 
     ArtifactName: code-coverage
   
-- script: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo m4/samplewebhook
-  workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
-  displayName: 'Build'    
-
 - script: |
+    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo m4/samplewebhook
     docker build -f dockerfile -t bartr/m4 .
-  workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
-  displayName: 'docker build'
-
-- script: |
     docker login -u $(dockerId) -p $pswd
     docker push bartr/m4
   workingDirectory: '$(System.DefaultWorkingDirectory)/docker/release'
-  displayName: 'docker push'
+  displayName: 'build tasks'
 
   env:
     pswd: $(dockerPassword)  
