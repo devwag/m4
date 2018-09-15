@@ -114,9 +114,16 @@ echo "Starting deployment..."
 	set -x
 	az appservice plan create --name $deploymentName --resource-group $resourceGroupName --sku B1 --is-linux
 	az webapp create --plan $deploymentName --resource-group $resourceGroupName --name $deploymentName --deployment-container-image-name bartr/m4
+
+# bartr - this doesn't appear as a setting when deployed from the portal
+# this is automatically controlled by the port that the docker image controls
+# I would remove as it seems like an opportunity for a mismatch between what
+# docker exports and what is here
+
 	az webapp config appsettings set --resource-group $resourceGroupName --name $deploymentName --settings WEBSITES_PORT=8080
 
 ## bartr - The below line will enable shared storage (i.e. /home/LogFiles) - default is false
+## I would add this config setting
 #az webapp config appsettings set --resource-group m4 --name bartr --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
 
 	echo "**********************"
