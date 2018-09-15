@@ -14,18 +14,11 @@
  .PARAMETER resourceGroupLocation
     Optional, a resource group location. If specified, will try to create a new resource group in this location. If not specified, assumes resource group is existing.
 
-  .PARAMETER dnsPrefix
-    The DNS prefix to be assigned to the application's public end points. The resulting values must me unique for each Azure region
-
- .PARAMETER templateFilePath
-    Optional, path to the template file. Defaults to template.json.
-
- .PARAMETER parametersFilePath
-    Optional, path to the parameters file. Defaults to parameters.json. If file is not found, will prompt for parameter values based on template.
+ .PARAMETER appName
+    A unique name to be used as the resource and DNS prefix. 
 #>
 
 param(
- [Parameter(Mandatory=$True)]
  [string]
  $subscriptionId,
 
@@ -38,15 +31,26 @@ param(
 
  [Parameter(Mandatory=$True)]
  [string]
- $dnsPrefix,
+ $appName,
 
  [string]
- $templateFilePath = "template.json",
-
- [string]
- $parametersFilePath = "parameters.json"
+ $templateFilePath = "template.json"
 )
 
+$ErrorActionPreference = "Stop";
+
+if($subscriptionId -eq '') {
+    $activeSub = ((Get-AzureRmContext).Subscription)
+    if(($result = Read-Host "subscriptionID [$activeSub]") -eq '') {
+        $subscriptionId = $activeSub
+    } else {
+        $subscriptionId = $result
+    }
+}
+
+#******************************************************************************
+# Helper functions
+#******************************************************************************
 <#
 .SYNOPSIS
     Registers RPs
@@ -60,9 +64,6 @@ Function RegisterRP {
     Register-AzureRmResourceProvider -ProviderNamespace $ResourceProviderNamespace;
 }
 
-#******************************************************************************
-# Help functions
-#******************************************************************************
 function Login
 {
     $needLogin = $true
@@ -106,15 +107,6 @@ Login;
 Write-Host "Selecting subscription '$subscriptionId'";
 Select-AzureRmSubscription -SubscriptionID $subscriptionId;
 
-# Register RPs
-$resourceProviders = @("microsoft.eventgrid","microsoft.web");
-if($resourceProviders.length) {
-    Write-Host "Registering resource providers"
-    foreach($resourceProvider in $resourceProviders) {
-        RegisterRP($resourceProvider);
-    }
-}
-
 #Create or check for existing resource group
 $resourceGroup = Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction SilentlyContinue
 if(!$resourceGroup)
@@ -131,10 +123,30 @@ else{
     Write-Host "Using existing resource group '$resourceGroupName'";
 }
 
+# Register RPs
+$resourceProviders = @("microsoft.eventgrid","microsoft.web");
+if($resourceProviders.length) {
+    Write-Host "Registering resource providers"
+    foreach($resourceProvider in $resourceProviders) {
+        #RegisterRP($resourceProvider);
+    }
+}
+
 # Start the deployment
-Write-Host "Starting deployment...";
-if(Test-Path $parametersFilePath) {
-    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -TemplateParameterFile $parametersFilePath -EventGridTopicName $eventGridTopicName -location $resourceGroupLocation;
-} else {
-    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -dns_prefix $dnsPrefix -location $resourceGroupLocation;
+Write-Host "Deploying...";
+$parameters = @{}
+$parameters.Add("location", "$resourceGroupLocation")
+$parameters.Add("dns_prefix", "$appName")
+try {
+    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -TemplateParameterObject $parameters;
+}
+catch {
+    # "esvalidation" indicates the error triggered because the new event grid webhook subscription could not be verified.
+    # That is expected and normal because the app service is not yet up and running and can't yet respond to the validation
+    # request. Thus, there is no real error. 
+    if (($_.Exception.Message).Contains("esvalidation")) {
+        Write-Host "Deployment succeeded. The app service typically takes a few minutes to finish initializing before it can accept requests."
+    } else {
+        Write-Error "$_.Exception.Message"
+    }
 }

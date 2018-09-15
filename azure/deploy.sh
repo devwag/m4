@@ -69,14 +69,6 @@ if [ ! -f "$templateFilePath" ]; then
 	exit 1
 fi
 
-#parameter file path
-parametersFilePath="parameters.json"
-
-if [ ! -f "$parametersFilePath" ]; then
-	echo "$parametersFilePath not found"
-	exit 1
-fi
-
 if [ -z "$subscriptionId" ] || [ -z "$resourceGroupName" ] || [ -z "$deploymentName" ]; then
 	echo "Either one of subscriptionId, resourceGroupName, deploymentName is empty"
 	usage
@@ -113,7 +105,13 @@ fi
 echo "Starting deployment..."
 (
 	set -x
-	az group deployment create --name "$deploymentName" --resource-group "$resourceGroupName" --template-file "$templateFilePath" --parameters "@${parametersFilePath}"
+	az appservice plan create --name $deploymentName --resource-group $resourceGroupName --sku B1 --is-linux
+	az webapp create --plan $deploymentName --resource-group $resourceGroupName --name $deploymentName --deployment-container-image-name bartr/m4
+	az webapp config appsettings set --resource-group $resourceGroupName --name $deploymentName --settings WEBSITES_PORT=8080
+	echo "**********************"
+	echo "TODO: EventGrid/topic not yet provisioned via Bash script."
+	echo "TODO: EventGrid/webhook not yet provisioned via Bash script."
+	echo "**********************"
 )
 
 if [ $?  == 0 ];

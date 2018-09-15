@@ -10,69 +10,65 @@
             "defaultValue": "parameters('location')",
             "type": "string"
         },
-        "sites_name": {
-            "defaultValue": "[concat(parameters('dns_prefix'), '-site')]",
-            "type": "string"
-        },
-        "event_grid_topic_name": {
-            "defaultValue": "[concat(parameters('dns_prefix'), '-topic')]",
-            "type": "string"
-        },
-        "config_web_name": {
-            "defaultValue": "[concat(parameters('dns_prefix'), '-web')]",
-            "type": "string"
-        },
-        "appservice_name": {
-            "defaultValue": "[concat(parameters('dns_prefix'), '-appserviceplan')]",
-            "type": "string"
-        },
-        "deployments_121536470390904_name": {
-            "defaultValue": "121536470390904",
+        "domain": {
+            "defaultValue": "[concat(parameters('dns_prefix'), '.azurewebsites.net')]",
             "type": "string"
         },
         "webhook_url": {
-            "defaultValue": "[concat('https://', parameters('dns_prefix'), '.azurewebsites.net/person')]",
+            "defaultValue": "[concat('https://', parameters('domain'), '/person')]",
             "type": "string"
         }
     },
     "variables": {},
-    "resources": [{
-        "type": "Microsoft.EventGrid/topics",
-        "name": "[parameters('dns_prefix')]",
-        "location": "[parameters('location')]",
-        "apiVersion": "2018-01-01"
-    }, {
+    "resources": [
+    {
         "type": "Microsoft.Web/serverfarms",
-        "name": "[parameters('appservice_name')]",
+        "sku": {
+            "name": "B1",
+            "tier": "Basic",
+            "size": "B1",
+            "family": "B",
+            "capacity": 1
+        },
+        "kind": "linux",
+        "name": "[parameters('dns_prefix')]",
         "apiVersion": "2016-09-01",
-        "location": "[parameters('location')]"
-    }, {
-        "type": "Microsoft.Web/sites",
-        "name": "[parameters('sites_name')]",
-        "apiVersion": "2016-03-01",
         "location": "[parameters('location')]",
-        "kind": "app,linux,container",
+        "scale": null,
         "properties": {
-            "name": "[parameters('sites_name')]",
+            "reserved": true
+        },
+        "dependsOn": []
+    },
+    {
+        "name": "[parameters('dns_prefix')]",
+        "type": "Microsoft.Web/sites",
+        "kind": "app,linux,container",
+        "apiVersion": "2016-08-01",
+        "location": "[parameters('location')]",
+        "properties": {
+            "serverFarmId": "[parameters('dns_prefix')]",
+            "reserved": false,
             "siteConfig": {
-                "appSettings": [
-                    {
-                        "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-                        "value": "false"
-                    }
-                ],
-                "appCommandLine": "",
-                "linuxFxVersion": "DOCKER|bartr/m4"
+                "netFrameworkVersion": "v4.6",
+                "linuxFxVersion": "DOCKER|bartr/m4debug"
             },
-            "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appservice_name'))]"
+            "scmSiteAlsoStopped": false,
+            "microService": "WebSites"
         },
         "dependsOn": [
-            "[resourceId('Microsoft.Web/serverfarms', parameters('appservice_name'))]"
+            "[resourceId('Microsoft.Web/serverfarms', parameters('dns_prefix'))]"
         ]
     },
     {
-        "type": "Microsoft.EventGrid/eventSubscriptions",
+        "name": "[parameters('dns_prefix')]",
+        "type": "Microsoft.EventGrid/topics",
+        "location": "[parameters('location')]",
+        "apiVersion": "2018-01-01"
+    }, 
+    {
         "name": "[concat(parameters('dns_prefix'), '-person-webhook')]",
+        "type": "Microsoft.EventGrid/eventSubscriptions",
         "apiVersion": "2018-01-01",
         "properties": {
             "destination": {
