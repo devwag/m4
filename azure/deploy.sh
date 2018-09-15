@@ -32,10 +32,15 @@ while getopts ":i:g:n:l:" arg; do
 done
 shift $((OPTIND-1))
 
-#Prompt for parameters is some required parameters are missing
+#Prompt for parameters if some required parameters are missing
 if [[ -z "$subscriptionId" ]]; then
 	echo "Your subscription ID can be looked up with the CLI using: az account show --out json "
 	echo "Enter your subscription ID:"
+
+# bart - account list will show the subscriptions
+# you might add this command here
+# az account list --output table
+
 	read subscriptionId
 	[[ "${subscriptionId:?}" ]]
 fi
@@ -56,7 +61,9 @@ fi
 if [[ -z "$resourceGroupLocation" ]]; then
 	echo "If creating a *new* resource group, you need to set a location "
 	echo "You can lookup locations with the CLI using: az account list-locations "
-	
+
+# bart - you might consider running this command here
+# az account list-locations --output table	
 	echo "Enter resource group location:"
 	read resourceGroupLocation
 fi
@@ -108,6 +115,10 @@ echo "Starting deployment..."
 	az appservice plan create --name $deploymentName --resource-group $resourceGroupName --sku B1 --is-linux
 	az webapp create --plan $deploymentName --resource-group $resourceGroupName --name $deploymentName --deployment-container-image-name bartr/m4
 	az webapp config appsettings set --resource-group $resourceGroupName --name $deploymentName --settings WEBSITES_PORT=8080
+
+## bartr - The below line will enable shared storage (i.e. /home/LogFiles) - default is false
+#az webapp config appsettings set --resource-group m4 --name bartr --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
+
 	echo "**********************"
 	echo "TODO: EventGrid/topic not yet provisioned via Bash script."
 	echo "TODO: EventGrid/webhook not yet provisioned via Bash script."
