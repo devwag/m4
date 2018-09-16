@@ -2,8 +2,8 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "dns_prefix": {
-            "defaultValue": "parameters('dns_prefix')",
+        "app_name": {
+            "defaultValue": "parameters('app_name')",
             "type": "string"
         },
         "location": {
@@ -11,11 +11,19 @@
             "type": "string"
         },
         "domain": {
-            "defaultValue": "[concat(parameters('dns_prefix'), '.azurewebsites.net')]",
+            "defaultValue": "[concat(parameters('app_name'), '.azurewebsites.net')]",
             "type": "string"
         },
         "webhook_url": {
             "defaultValue": "[concat('https://', parameters('domain'), '/person')]",
+            "type": "string"
+        },
+        "serviceplan_name": {
+            "defaultValue": "[concat(parameters('app_name'), '-serviceplan')]",
+            "type": "string"
+        },
+        "topic_name": {
+            "defaultValue": "[concat(parameters('app_name'), '-site')]",
             "type": "string"
         }
     },
@@ -23,6 +31,8 @@
     "resources": [
     {
         "type": "Microsoft.Web/serverfarms",
+        "kind": "linux",
+        "name": "[parameters('serviceplan_name')]",
         "sku": {
             "name": "B1",
             "tier": "Basic",
@@ -30,8 +40,6 @@
             "family": "B",
             "capacity": 1
         },
-        "kind": "linux",
-        "name": "[parameters('dns_prefix')]",
         "apiVersion": "2016-09-01",
         "location": "[parameters('location')]",
         "scale": null,
@@ -41,13 +49,13 @@
         "dependsOn": []
     },
     {
-        "name": "[parameters('dns_prefix')]",
         "type": "Microsoft.Web/sites",
         "kind": "app,linux,container",
+        "name": "[parameters('topic_name')]",
         "apiVersion": "2016-08-01",
         "location": "[parameters('location')]",
         "properties": {
-            "serverFarmId": "[parameters('dns_prefix')]",
+            "serverFarmId": "[parameters('app_name')]",
             "reserved": false,
             "siteConfig": {
                 "netFrameworkVersion": "v4.6",
@@ -57,17 +65,17 @@
             "microService": "WebSites"
         },
         "dependsOn": [
-            "[resourceId('Microsoft.Web/serverfarms', parameters('dns_prefix'))]"
+            "[resourceId('Microsoft.Web/serverfarms', parameters('serviceplan_name'))]"
         ]
     },
     {
-        "name": "[parameters('dns_prefix')]",
         "type": "Microsoft.EventGrid/topics",
+        "name": 
         "location": "[parameters('location')]",
         "apiVersion": "2018-01-01"
     }, 
     {
-        "name": "[concat(parameters('dns_prefix'), '-person-webhook')]",
+        "name": "[concat(parameters('app_name'), '-person-webhook')]",
         "type": "Microsoft.EventGrid/eventSubscriptions",
         "apiVersion": "2018-01-01",
         "properties": {
@@ -84,7 +92,7 @@
             }
         },
         "dependsOn": [
-            "[resourceId('Microsoft.EventGrid/topics', parameters('dns_prefix'))]"
+            "[resourceId('Microsoft.EventGrid/topics', parameters('topic_name'))]"
         ]
     }]
 }
