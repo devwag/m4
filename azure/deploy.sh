@@ -6,11 +6,40 @@ IFS=$'\n\t'
 # -o: prevents errors in a pipeline from being masked
 # IFS new value is less likely to cause confusing bugs when looping arrays or arguments (e.g. $@)
 
-usage() { echo "Usage: $0 -i <subscriptionId> -g <resourceGroupName> -n <deploymentName> -l <resourceGroupLocation>" 1>&2; exit 1; }
+#******************************************************************************
+# Helper functions
+#******************************************************************************
+usage() { echo "Usage: $0 -i <subscriptionId> -g <resourceGroupName> -n <appName> -l <resourceGroupLocation>" 1>&2; exit 1; }
 
+validatedRead() {
+	declare allowEmpty
+
+	prompt=$1
+	regex=$2
+	error=$3
+	if [[ $# -eq 4 ]]; then
+		allowEmpty=$4
+	fi
+
+	userInput=""
+	while [[ ! $userInput =~ $regex ]]; do
+		if [[ (-n $userInput) ]]; then
+			printf "'%s' is not valid. %s\n" $userInput $error
+		fi
+		printf $prompt
+    read userInput
+		if [[ $allowEmpty && (-z "$userInput") ]]; then
+			return
+		fi
+	done
+}
+
+#******************************************************************************
+# Main script
+#******************************************************************************
 declare subscriptionId=""
 declare resourceGroupName=""
-declare deploymentName=""
+declare appName=""
 declare resourceGroupLocation=""
 
 # Initialize parameters specified from command line
@@ -23,7 +52,7 @@ while getopts ":i:g:n:l:" arg; do
 			resourceGroupName=${OPTARG}
 			;;
 		n)
-			deploymentName=${OPTARG}
+			appName=${OPTARG}
 			;;
 		l)
 			resourceGroupLocation=${OPTARG}
@@ -32,61 +61,51 @@ while getopts ":i:g:n:l:" arg; do
 done
 shift $((OPTIND-1))
 
+(
+	set +e
+	#login to azure using your credentials
+	az account show &> /dev/null
+
+	if [ $? != 0 ];
+	then
+		echo "Azure login required..."
+		az login
+	fi
+)
+
 #Prompt for parameters if some required parameters are missing
 if [[ -z "$subscriptionId" ]]; then
-	echo "Your subscription ID can be looked up with the CLI using: az account show --out json "
-	echo "Enter your subscription ID:"
+	printf "\nAvailable subscriptions:\n"
+	
+	az account list -o table
+	echo
+	
+	currentSub="$(az account show -o tsv | cut -f2)"
+	printf -v prompt "Enter your subscription ID [%s]: " $currentSub
+	validatedRead $prompt "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" "Subscription ID must be a GUID." true 
 
-# bart - account list will show the subscriptions
-# you might add this command here
-# az account list --output table
+	subscriptionId=$userInput
+	if [[ (-z $subscriptionId) && (-n $currentSub)]]; then
+		subscriptionId=$currentSub
+	else
+		[[ "${subscriptionId:?}" ]]
+	fi
+fi
+printf "Using SubscriptionId %s.\n" $subscriptionId
 
-	read subscriptionId
-	[[ "${subscriptionId:?}" ]]
+if [[ -z "$appName" ]]; then
+	validatedRead "\nEnter a unique application name: " "^[a-zA-Z0-9]+$" "Only letters & numbers are allowed." # app name used as DNS prefix so no underscores allowed
+  appName=$userInput
 fi
 
 if [[ -z "$resourceGroupName" ]]; then
-	echo "This script will look for an existing resource group, otherwise a new one will be created "
-	echo "You can create new resource groups with the CLI using: az group create "
-	echo "Enter a resource group name"
-	read resourceGroupName
-	[[ "${resourceGroupName:?}" ]]
+	validatedRead "\nEnter a resource group name: " "^[a-zA-Z0-9_]+$" "Only letters, numbers and underscores are allowed."
+	resourceGroupName=$userInput
 fi
 
-if [[ -z "$deploymentName" ]]; then
-	echo "Enter a name for this deployment:"
-	read deploymentName
-fi
-
-if [[ -z "$resourceGroupLocation" ]]; then
-	echo "If creating a *new* resource group, you need to set a location "
-	echo "You can lookup locations with the CLI using: az account list-locations "
-
-# bart - you might consider running this command here
-# az account list-locations --output table	
-	echo "Enter resource group location:"
-	read resourceGroupLocation
-fi
-
-#templateFile Path - template file to be used
-templateFilePath="template.json"
-
-if [ ! -f "$templateFilePath" ]; then
-	echo "$templateFilePath not found"
-	exit 1
-fi
-
-if [ -z "$subscriptionId" ] || [ -z "$resourceGroupName" ] || [ -z "$deploymentName" ]; then
-	echo "Either one of subscriptionId, resourceGroupName, deploymentName is empty"
+if [ -z "$subscriptionId" ] || [ -z "$resourceGroupName" ] || [ -z "$appName" ]; then
+	printf "\nEither one of subscriptionId, resourceGroupName, appName is empty\n"
 	usage
-fi
-
-#login to azure using your credentials
-az account show 1> /dev/null
-
-if [ $? != 0 ];
-then
-	az login
 fi
 
 #set the default subscription id
@@ -96,36 +115,48 @@ set +e
 
 #Check for existing RG
 az group show --name $resourceGroupName 1> /dev/null
-
 if [ $? != 0 ]; then
-	echo "Resource group with name" $resourceGroupName "could not be found. Creating new resource group.."
+	echo "To create a new resource group, please enter an Azure location:"
+
+	if [[ -z "$resourceGroupLocation" ]]; then
+		locations="$(az account list-locations --output tsv | cut -f5 | tr '\n' ', ' | sed "s/,/, /g")"
+		printf "\n%s\n" "${locations%??}"
+		validatedRead "\nEnter resource group location: " "^[a-zA-Z0-9]+$" "Only letters & numbers are allowed."
+		resourceGroupLocation=$userInput
+	fi
+
 	set -e
 	(
 		set -x
 		az group create --name $resourceGroupName --location $resourceGroupLocation 1> /dev/null
 	)
-	else
-	echo "Using existing resource group..."
+else
+	resourceGroupLocation="$(az group show -n $resourceGroupName -o tsv | cut -f2)"
+
+	printf "Using existing resource group...\n"
 fi
 
-#Start deployment
-echo "Starting deployment..."
+siteName=$appName
+printf -v servicePlanName "%s-serviceplan" $appName
+printf -v topicName "%s-topic" $appName
+printf -v webhookName "%s-person-webhook" $appName
+printf -v webhookUrl "https://%s.azurewebsites.net/person" $appName
+
 (
-	set -x
-	az appservice plan create --name $deploymentName --resource-group $resourceGroupName --sku B1 --is-linux
-	az webapp create --plan $deploymentName --resource-group $resourceGroupName --name $deploymentName --deployment-container-image-name bartr/m4
-	az webapp config appsettings set --resource-group $resourceGroupName --name $deploymentName --settings WEBSITES_PORT=8080
+	set -e
 
-## bartr - The below line will enable shared storage (i.e. /home/LogFiles) - default is false
-#az webapp config appsettings set --resource-group m4 --name bartr --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
-
-	echo "**********************"
-	echo "TODO: EventGrid/topic not yet provisioned via Bash script."
-	echo "TODO: EventGrid/webhook not yet provisioned via Bash script."
-	echo "**********************"
+	printf "\nDeploying App Service Plan...\n"
+	(set -x; az appservice plan create --name $servicePlanName --resource-group $resourceGroupName --sku B1 --is-linux)
+	printf "\nDeploying App Service...\n"
+	(set -x; az webapp create --plan $servicePlanName --resource-group $resourceGroupName --name $siteName --deployment-container-image-name bartr/m4)
+	printf "\nEnabling storage for log files...\n"
+	(set -x; az webapp config appsettings set --resource-group $resourceGroupName --name $siteName --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true)
+	printf "\nConfiguring App Service TCP ports...\n"
+	(set -x; az webapp config appsettings set --resource-group $resourceGroupName --name $siteName --settings WEBSITES_PORT=8080)
+	printf "\nDeploying Event Grid topic...\n"
+	(set -x; az eventgrid topic create --name $topicName --resource-group $resourceGroupName	--location $resourceGroupLocation)
+	printf "\nDeploying Event Grid subscription (webhook)...\n"
+	(set -x; az eventgrid event-subscription create --name $webhookName --topic-name $topicName --resource-group $resourceGroupName --endpoint $webhookUrl)
 )
 
-if [ $?  == 0 ];
- then
-	echo "Template has been successfully deployed"
-fi
+printf "\nDeployment Complete.\n\n"
