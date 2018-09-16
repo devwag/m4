@@ -79,7 +79,7 @@ if [[ -z "$subscriptionId" ]]; then
 	
 	az account list -o table
 	echo
-	
+
 	currentSub="$(az account show -o tsv | cut -f2)"
 	printf -v prompt "Enter your subscription ID [%s]: " $currentSub
 	validatedRead $prompt "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" "Subscription ID must be a GUID." true 
@@ -151,8 +151,6 @@ printf -v webhookUrl "https://%s.azurewebsites.net/person" $appName
 	(set -x; az webapp create --plan $servicePlanName --resource-group $resourceGroupName --name $siteName --deployment-container-image-name bartr/m4)
 	printf "\nEnabling storage for log files...\n"
 	(set -x; az webapp config appsettings set --resource-group $resourceGroupName --name $siteName --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true)
-	printf "\nConfiguring App Service TCP ports...\n"
-	(set -x; az webapp config appsettings set --resource-group $resourceGroupName --name $siteName --settings WEBSITES_PORT=8080)
 	printf "\nDeploying Event Grid topic...\n"
 	(set -x; az eventgrid topic create --name $topicName --resource-group $resourceGroupName	--location $resourceGroupLocation)
 	printf "\nDeploying Event Grid subscription (webhook)...\n"
