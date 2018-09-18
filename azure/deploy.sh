@@ -12,14 +12,9 @@ IFS=$'\n\t'
 usage() { echo "Usage: $0 -i <subscriptionId> -g <resourceGroupName> -n <appName> -l <resourceGroupLocation>" 1>&2; exit 1; }
 
 validatedRead() {
-	declare allowEmpty
-
 	prompt=$1
 	regex=$2
 	error=$3
-	if [[ $# -eq 4 ]]; then
-		allowEmpty=$4
-	fi
 
 	userInput=""
 	while [[ ! $userInput =~ $regex ]]; do
@@ -28,10 +23,65 @@ validatedRead() {
 		fi
 		printf $prompt
     read userInput
-		if [[ $allowEmpty && (-z "$userInput") ]]; then
-			return
+	done
+}
+
+readSubscriptionId () {
+	currentSub="$(az account show -o tsv | cut -f2)"
+	subNames="$(az account list -o tsv | cut -f4)"
+	subIds="$(az account list -o tsv | cut -f2)"
+	
+	while ([[ -z "$subscriptionId" ]]); do
+		printf "Enter your subscription ID [%s]: " $currentSub
+		read userInput
+
+		if [[ (-z "$userInput") && (-n "$currentSub")]]; then
+			userInput=$currentSub
+		fi
+
+		set +e
+		nameExists="$(echo $subNames | grep $userInput)"
+		idExists="$(echo $subIds | grep $userInput)"
+	
+		if [[ (-z "$nameExists") && (-z "$idExists") ]]; then
+			printf "'${userInput}' is not a valid subscription name or ID.\n"
+		else
+			subscriptionId=$userInput
 		fi
 	done
+}
+
+readLocation() {
+	if [[ -z "$resourceGroupLocation" ]]; then
+		locations="$(az account list-locations --output tsv | cut -f5 | tr '\n' ', ' | sed "s/,/, /g")"
+		printf "\n%s\n" "${locations%??}"
+
+		declare locationExists
+		while ([[ -z $resourceGroupLocation ]]); do
+			validatedRead "\nEnter resource group location: " "^[a-zA-Z0-9]+$" "Only letters & numbers are allowed."
+			locationExists="$(echo $locations | grep $userInput)"
+			if [[ -z $locationExists ]]; then
+				printf "'${userInput}' is not a valid location.\n"
+			else
+				resourceGroupLocation=$userInput
+			fi
+		done
+	fi
+}
+
+testAppService() {
+	(
+		set +e
+		httpStatus="$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "application/json" -m 120 --data-binary @validation.json $webhookUrl)"
+		exitCode=$?
+		if [[ httpStatus -eq 200 ]]; then
+			printf "App service running.\n"
+		elif [[ exitCode -eq 28 ]]; then
+			printf "Warning: App service did not respond after 120 seconds. It may stil be starting.\n"
+		else
+			printf "App service not responding correctly.\n"
+		fi
+	)
 }
 
 #******************************************************************************
@@ -57,7 +107,7 @@ while getopts ":i:g:n:l:" arg; do
 		l)
 			resourceGroupLocation=${OPTARG}
 			;;
-		esac
+	esac
 done
 shift $((OPTIND-1))
 
@@ -69,29 +119,18 @@ shift $((OPTIND-1))
 	if [ $? != 0 ];
 	then
 		echo "Azure login required..."
-		az login
+		az login -o table
+	else
+		az account list -o table
 	fi
 )
 
 #Prompt for parameters if some required parameters are missing
 if [[ -z "$subscriptionId" ]]; then
-	printf "\nAvailable subscriptions:\n"
-	
-	az account list -o table
 	echo
-
-	currentSub="$(az account show -o tsv | cut -f2)"
-	printf -v prompt "Enter your subscription ID [%s]: " $currentSub
-	validatedRead $prompt "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" "Subscription ID must be a GUID." true 
-
-	subscriptionId=$userInput
-	if [[ (-z $subscriptionId) && (-n $currentSub)]]; then
-		subscriptionId=$currentSub
-	else
-		[[ "${subscriptionId:?}" ]]
-	fi
+	readSubscriptionId
 fi
-printf "Using SubscriptionId %s.\n" $subscriptionId
+printf "Using subscriptijef %s.\n" $subscriptionId
 
 if [[ -z "$appName" ]]; then
 	validatedRead "\nEnter a unique application name: " "^[a-zA-Z0-9]+$" "Only letters & numbers are allowed." # app name used as DNS prefix so no underscores allowed
@@ -103,36 +142,20 @@ if [[ -z "$resourceGroupName" ]]; then
 	resourceGroupName=$userInput
 fi
 
-if [ -z "$subscriptionId" ] || [ -z "$resourceGroupName" ] || [ -z "$appName" ]; then
-	printf "\nEither one of subscriptionId, resourceGroupName, appName is empty\n"
-	usage
-fi
-
 #set the default subscription id
 az account set --subscription $subscriptionId
 
 set +e
 
 #Check for existing RG
-az group show --name $resourceGroupName 1> /dev/null
+az group show --name $resourceGroupName &> /dev/null
 if [ $? != 0 ]; then
 	echo "To create a new resource group, please enter an Azure location:"
+	readLocation
 
-	if [[ -z "$resourceGroupLocation" ]]; then
-		locations="$(az account list-locations --output tsv | cut -f5 | tr '\n' ', ' | sed "s/,/, /g")"
-		printf "\n%s\n" "${locations%??}"
-		validatedRead "\nEnter resource group location: " "^[a-zA-Z0-9]+$" "Only letters & numbers are allowed."
-		resourceGroupLocation=$userInput
-	fi
-
-	set -e
-	(
-		set -x
-		az group create --name $resourceGroupName --location $resourceGroupLocation 1> /dev/null
-	)
+	(set -ex;	az group create --name $resourceGroupName --location $resourceGroupLocation)
 else
 	resourceGroupLocation="$(az group show -n $resourceGroupName -o tsv | cut -f2)"
-
 	printf "Using existing resource group...\n"
 fi
 
@@ -142,19 +165,25 @@ printf -v topicName "%s-topic" $appName
 printf -v webhookName "%s-person-webhook" $appName
 printf -v webhookUrl "https://%s.azurewebsites.net/person" $appName
 
-(
-	set -e
+set -e
 
-	printf "\nDeploying App Service Plan...\n"
-	(set -x; az appservice plan create --name $servicePlanName --resource-group $resourceGroupName --sku B1 --is-linux)
-	printf "\nDeploying App Service...\n"
-	(set -x; az webapp create --plan $servicePlanName --resource-group $resourceGroupName --name $siteName --deployment-container-image-name bartr/m4)
-	printf "\nEnabling storage for log files...\n"
-	(set -x; az webapp config appsettings set --resource-group $resourceGroupName --name $siteName --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true)
-	printf "\nDeploying Event Grid topic...\n"
-	(set -x; az eventgrid topic create --name $topicName --resource-group $resourceGroupName	--location $resourceGroupLocation)
-	printf "\nDeploying Event Grid subscription (webhook)...\n"
-	(set -x; az eventgrid event-subscription create --name $webhookName --topic-name $topicName --resource-group $resourceGroupName --endpoint $webhookUrl)
+printf "\nDeploying App Service Plan...\n"
+(set -x; az appservice plan create --resource-group $resourceGroupName --name $servicePlanName --sku B1 --is-linux)
+printf "\nDeploying App Service...\n"
+(set -x; az webapp create --resource-group $resourceGroupName --plan $servicePlanName --name $servicePlanName --name $siteName --deployment-container-image-name bartr/m4)
+printf "\nEnabling continuous deployment (CD)...\n"
+(set -x; az webapp deployment container config --resource-group $resourceGroupName --name $siteName --enable-cd true)
+printf "\nEnabling storage for log files...\n"
+(
+	set -x
+	az webapp config appsettings set --resource-group $resourceGroupName --name $siteName --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
+	az webapp restart --resource-group $resourceGroupName --name $siteName
 )
+printf "\nVerifying the app service is running...\n"
+testAppService
+printf "\nDeploying Event Grid topic...\n"
+(set -x; az eventgrid topic create --resource-group $resourceGroupName --name $topicName	--location $resourceGroupLocation)
+printf "\nDeploying Event Grid subscription (webhook)...\n"
+(set -x; az eventgrid event-subscription create --resource-group $resourceGroupName --name $webhookName --topic-name $topicName --endpoint $webhookUrl)
 
 printf "\nDeployment Complete.\n\n"
