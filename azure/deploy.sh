@@ -170,7 +170,7 @@ set -e
 printf "\nDeploying App Service Plan...\n"
 (set -x; az appservice plan create --resource-group $resourceGroupName --name $servicePlanName --sku B1 --is-linux)
 printf "\nDeploying App Service...\n"
-(set -x; az webapp create --resource-group $resourceGroupName --plan $servicePlanName --name $servicePlanName --name $siteName --deployment-container-image-name bartr/m4)
+(set -x; az webapp create --resource-group $resourceGroupName --plan $servicePlanName --name $servicePlanName --name $siteName --deployment-container-image-name bartr/m4debug)
 printf "\nEnabling continuous deployment (CD)...\n"
 (set -x; az webapp deployment container config --resource-group $resourceGroupName --name $siteName --enable-cd true)
 printf "\nEnabling storage for log files...\n"
